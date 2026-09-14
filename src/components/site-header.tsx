@@ -11,10 +11,13 @@ import { cn } from "@/lib/utils";
 import BrandLogo from "@/components/brand-logo";
 import WeChatCommunity from "@/components/wechat-community";
 
+type WorkbenchAuthMode = "sso" | "invite" | "sso_or_invite";
+
 export default function SiteHeader() {
   const [scrolled, setScrolled] = useState(false);
   const [open, setOpen] = useState(false);
   const [authOpen, setAuthOpen] = useState(false);
+  const [workbenchAuthMode, setWorkbenchAuthMode] = useState<WorkbenchAuthMode | null>(null);
   const authMenuRef = useRef<HTMLDivElement>(null);
   const lenis = useLenis();
   const pathname = usePathname();
@@ -30,6 +33,7 @@ export default function SiteHeader() {
   const signInHref = loginPath(locale);
   const onAuthPage = /(^|\/)login\/?$/.test(pathname);
   const accountLabel = (user?.email || user?.nickname || "").trim().charAt(0);
+  const showPortalAuth = workbenchAuthMode === "sso" || workbenchAuthMode === "sso_or_invite";
   const languageOptions: Array<{ locale: Locale; label: string; title: string }> = [
     { locale: "zh-CN", label: "简", title: "简体中文" },
     { locale: "en", label: "EN", title: "English" },
@@ -67,6 +71,28 @@ export default function SiteHeader() {
       document.removeEventListener("keydown", onKeyDown);
     };
   }, [authOpen]);
+
+  useEffect(() => {
+    let active = true;
+    const authConfigUrl = `${WORKBENCH_URL.replace(/\/$/, "")}/api/forge/auth/config`;
+    void fetch(authConfigUrl, { cache: "no-store" })
+      .then(async (response) => {
+        if (!response.ok) return null;
+        const payload = (await response.json()) as { mode?: unknown };
+        return payload.mode === "sso" || payload.mode === "invite" || payload.mode === "sso_or_invite"
+          ? payload.mode
+          : null;
+      })
+      .then((mode) => {
+        if (active) setWorkbenchAuthMode(mode);
+      })
+      .catch(() => {
+        if (active) setWorkbenchAuthMode(null);
+      });
+    return () => {
+      active = false;
+    };
+  }, []);
 
   const goToSection = (
     event: MouseEvent<HTMLAnchorElement>,
@@ -161,7 +187,7 @@ export default function SiteHeader() {
               </button>
             ))}
           </div>
-          {!loading &&
+          {showPortalAuth && !loading &&
             (user ? (
               <div className="flex items-center gap-3">
                 <span className="flex h-7 w-7 items-center justify-center rounded-full border border-line text-[12px] text-ink">
@@ -292,7 +318,7 @@ export default function SiteHeader() {
               </span>
             </a>
           ))}
-          {!loading &&
+          {showPortalAuth && !loading &&
             (user ? (
               <button
                 type="button"
