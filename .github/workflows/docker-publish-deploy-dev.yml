@@ -1,13 +1,14 @@
-name: docker-publish-deploy
+name: docker-publish-deploy-development
 
 on:
   push:
     branches:
-      - main
+      - "feature/**"
+      - "feature-*"
   workflow_dispatch:
     inputs:
       deploy:
-        description: "Build, push, and deploy to the remote Docker host"
+        description: "Build, push, and deploy to the Non-Prod Docker host"
         required: true
         default: true
         type: boolean
@@ -19,14 +20,14 @@ env:
   REGISTRY: crpi-tuqzw1uka36vt7nh.cn-hangzhou.personal.cr.aliyuncs.com
   WEBSITE_IMAGE_NAME: acr_namespace_narrativeos/linchangweb-website
 
-# Only the newest production deployment is useful; cancel stale builds/deploys.
 concurrency:
-  group: linchang-web-${{ github.ref }}
+  group: linchang-web-development
   cancel-in-progress: true
 
 jobs:
   build:
-    if: ${{ github.ref == 'refs/heads/main' }}
+    if: ${{ startsWith(github.ref, 'refs/heads/feature/') || startsWith(github.ref, 'refs/heads/feature-') }}
+    environment: development
     runs-on: ubuntu-latest
     outputs:
       version_tag: ${{ steps.vars.outputs.version_tag }}
@@ -36,7 +37,7 @@ jobs:
 
       - name: Compute image tag
         id: vars
-        run: echo "version_tag=sha-${GITHUB_SHA::12}" >> "$GITHUB_OUTPUT"
+        run: echo "version_tag=dev-sha-${GITHUB_SHA::12}" >> "$GITHUB_OUTPUT"
 
       - name: Set up Buildx
         uses: docker/setup-buildx-action@v3
@@ -48,49 +49,60 @@ jobs:
           username: ${{ secrets.ACR_USERNAME }}
           password: ${{ secrets.ACR_PASSWORD }}
 
-      - name: Docker metadata
-        id: meta
-        uses: docker/metadata-action@v5
-        with:
-          images: ${{ env.REGISTRY }}/${{ env.WEBSITE_IMAGE_NAME }}
-          tags: |
-            type=raw,value=latest,enable={{is_default_branch}}
-            type=raw,value=${{ steps.vars.outputs.version_tag }}
+      - name: Validate development public URL
+        env:
+          WORKBENCH_URL: ${{ vars.WORKBENCH_URL }}
+        run: |
+          test -n "$WORKBENCH_URL" || { echo "development variable WORKBENCH_URL is required"; exit 1; }
+          case "$WORKBENCH_URL" in
+            http://*/narrativeos/) ;;
+            *) echo "WORKBENCH_URL must look like http://SERVER_IP:3001/narrativeos/"; exit 1 ;;
+          esac
 
-      - name: Build and push website image
+      - name: Build and push development website image
         uses: docker/build-push-action@v6
         with:
           context: .
           file: ./docker/frontend.Dockerfile
           push: true
-          # Alibaba Cloud Personal ACR does not accept Buildx attestation manifests.
           provenance: false
           sbom: false
-          tags: ${{ steps.meta.outputs.tags }}
-          labels: ${{ steps.meta.outputs.labels }}
-          cache-from: type=gha,scope=linchang-web
-          cache-to: type=gha,mode=max,scope=linchang-web
+          build-args: |
+            NEXT_PUBLIC_WORKBENCH_URL=${{ vars.WORKBENCH_URL }}
+          tags: ${{ env.REGISTRY }}/${{ env.WEBSITE_IMAGE_NAME }}:${{ steps.vars.outputs.version_tag }}
+          cache-from: type=gha,scope=linchang-web-development
+          cache-to: type=gha,mode=max,scope=linchang-web-development
 
   deploy:
-    if: ${{ github.ref == 'refs/heads/main' && (github.event_name == 'push' || (github.event_name == 'workflow_dispatch' && inputs.deploy)) }}
+    if: ${{ (startsWith(github.ref, 'refs/heads/feature/') || startsWith(github.ref, 'refs/heads/feature-')) && (github.event_name == 'push' || (github.event_name == 'workflow_dispatch' && inputs.deploy)) }}
+    environment: development
     runs-on: ubuntu-latest
     timeout-minutes: 60
-    needs:
-      - build
+    needs: build
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Upload deployment files
+      - name: Prepare development deployment directory
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.DEPLOY_HOST }}
+          username: ${{ secrets.DEPLOY_USER }}
+          key: ${{ secrets.DEPLOY_SSH_KEY }}
+          script: |
+            set -e
+            sudo install -d -o "$(id -un)" -g "$(id -gn)" "${{ secrets.DEPLOY_PATH }}"
+
+      - name: Upload development deployment files
         uses: appleboy/scp-action@v0.1.7
         with:
           host: ${{ secrets.DEPLOY_HOST }}
           username: ${{ secrets.DEPLOY_USER }}
           key: ${{ secrets.DEPLOY_SSH_KEY }}
-          source: "docker-compose.prod.yml"
+          source: "docker-compose.dev.yml"
           target: ${{ secrets.DEPLOY_PATH }}
 
-      - name: Deploy on remote host
+      - name: Deploy on Non-Prod host
         uses: appleboy/ssh-action@v1.0.3
         env:
           VERSION_TAG: ${{ needs.build.outputs.version_tag }}
@@ -98,17 +110,17 @@ jobs:
           WEBSITE_IMAGE_NAME: ${{ env.WEBSITE_IMAGE_NAME }}
           ACR_USERNAME: ${{ secrets.ACR_USERNAME }}
           ACR_PASSWORD: ${{ secrets.ACR_PASSWORD }}
-          WEBSITE_PORT: ${{ vars.WEBSITE_PORT }}
         with:
           host: ${{ secrets.DEPLOY_HOST }}
           username: ${{ secrets.DEPLOY_USER }}
           key: ${{ secrets.DEPLOY_SSH_KEY }}
-          envs: VERSION_TAG,REGISTRY,WEBSITE_IMAGE_NAME,ACR_USERNAME,ACR_PASSWORD,WEBSITE_PORT
+          envs: VERSION_TAG,REGISTRY,WEBSITE_IMAGE_NAME,ACR_USERNAME,ACR_PASSWORD
           command_timeout: 60m
           script: |
             set -e
             mkdir -p "${{ secrets.DEPLOY_PATH }}"
             cd "${{ secrets.DEPLOY_PATH }}"
+            test -s .env || { echo "Missing development .env in $PWD"; exit 1; }
             echo "$ACR_PASSWORD" | docker login "$REGISTRY" -u "$ACR_USERNAME" --password-stdin
             export WEBSITE_IMAGE="$REGISTRY/$WEBSITE_IMAGE_NAME:$VERSION_TAG"
             if docker compose version >/dev/null 2>&1; then
@@ -119,24 +131,6 @@ jobs:
               echo "Neither 'docker compose' nor 'docker-compose' is installed on the remote host."
               exit 1
             fi
-            timed_retry() {
-              name="$1"
-              shift
-              echo "[$(date -Is)] Starting $name"
-              for attempt in 1 2 3 4 5; do
-                if "$@"; then
-                  echo "[$(date -Is)] Finished $name"
-                  return 0
-                fi
-                echo "[$(date -Is)] $name failed, retry $attempt/5..."
-                sleep 20
-              done
-              echo "[$(date -Is)] $name failed after retries"
-              return 1
-            }
-            timed_retry "pull website image" $COMPOSE_CMD -f docker-compose.prod.yml pull website
-            echo "[$(date -Is)] Starting docker compose up"
-            $COMPOSE_CMD -f docker-compose.prod.yml up -d
-            echo "[$(date -Is)] Finished docker compose up"
-            # Keep cleanup out of the deployment critical path; run it separately
-            # during maintenance so a deploy is not delayed by Docker disk scans.
+            docker network inspect narrativeos-development >/dev/null 2>&1 || docker network create narrativeos-development
+            $COMPOSE_CMD --env-file .env -f docker-compose.dev.yml pull website
+            $COMPOSE_CMD --env-file .env -f docker-compose.dev.yml up -d website

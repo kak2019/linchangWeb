@@ -1,0 +1,28 @@
+services:
+  website:
+    image: ${WEBSITE_IMAGE:?set WEBSITE_IMAGE}
+    restart: unless-stopped
+    env_file:
+      - .env
+    ports:
+      - "${WEBSITE_PORT:-3002}:3000"
+    environment:
+      NODE_ENV: production
+      AUTH_COOKIE_SECURE: "false"
+      DATABASE_URL: ${DATABASE_URL:?set DATABASE_URL}
+      AUTH_SECRET: ${AUTH_SECRET:?set AUTH_SECRET}
+      SMTP_HOST: ${SMTP_HOST:-}
+      SMTP_PORT: ${SMTP_PORT:-465}
+      SMTP_USER: ${SMTP_USER:-}
+      SMTP_PASS: ${SMTP_PASS:-}
+      SMTP_FROM: ${SMTP_FROM:-}
+      WECHAT_APP_ID: ${WECHAT_APP_ID:-}
+      WECHAT_APP_SECRET: ${WECHAT_APP_SECRET:-}
+      WECHAT_REDIRECT_URI: ${WECHAT_REDIRECT_URI:-}
+    networks:
+      - narrativeos_development
+
+networks:
+  narrativeos_development:
+    external: true
+    name: narrativeos-development

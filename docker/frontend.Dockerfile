@@ -3,6 +3,9 @@
 FROM node:20-alpine AS builder
 WORKDIR /app
 
+ARG NEXT_PUBLIC_WORKBENCH_URL=
+ENV NEXT_PUBLIC_WORKBENCH_URL=${NEXT_PUBLIC_WORKBENCH_URL}
+
 COPY package.json package-lock.json ./
 COPY prisma ./prisma
 RUN npm ci --no-audit --no-fund
