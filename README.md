@@ -48,7 +48,7 @@ NEXT_PUBLIC_WORKBENCH_URL=http://127.0.0.1:3001/ npm run dev
 - Secrets：`ACR_USERNAME`、`ACR_PASSWORD`、`DEPLOY_HOST`、`DEPLOY_USER`、`DEPLOY_SSH_KEY`、`DEPLOY_PATH`
 - Variable：`WORKBENCH_URL=http://服务器IP:3001/narrativeos/`
 
-在 Non-Prod 服务器的 `DEPLOY_PATH` 中，根据 `deploy/development.env.example` 创建 `.env`。开发官网地址为 `http://服务器IP:3002/`。由于使用 HTTP，开发环境通过 `AUTH_COOKIE_SECURE=false` 允许浏览器保存登录 Cookie；生产环境不要关闭该选项。
+在 Non-Prod 服务器的 `DEPLOY_PATH` 中，根据 `deploy/development.env.example` 创建 `.env`。开发官网地址为 `http://服务器IP:3002/`。由于使用 HTTP，开发环境通过 `AUTH_COOKIE_SECURE=false` 允许浏览器保存登录 Cookie；生产环境不要关闭该选项。`TEACHER_ECOSYSTEM_SERVICE_TOKEN` 必须使用独立的长随机值，并与生成工作台开发部署目录中的同名变量完全一致。
 
 ## 目录结构
 
