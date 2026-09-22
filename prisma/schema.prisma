@@ -13,6 +13,11 @@ enum AuthProvider {
   wechat
 }
 
+enum TeacherWorkStatus {
+  PUBLISHED
+  ARCHIVED
+}
+
 model User {
   id              String        @id @default(cuid())
   email           String?       @unique
@@ -24,8 +29,48 @@ model User {
   updatedAt       DateTime      @updatedAt @map("updated_at")
   accounts        Account[]
   sessions        AuthSession[]
+  teacherProfile  TeacherProfile?
+  teacherWorks    TeacherWork[]
 
   @@map("users")
+}
+
+model TeacherProfile {
+  userId      String   @id @map("user_id")
+  displayName String?  @map("display_name")
+  bio         String?  @db.Text
+  isSeed      Boolean  @default(true) @map("is_seed")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("teacher_profiles")
+}
+
+model TeacherWork {
+  id            String            @id @default(cuid())
+  jobId         String            @unique @map("job_id") @db.VarChar(32)
+  authorId      String            @map("author_id")
+  title         String            @db.VarChar(160)
+  summary       String?           @db.Text
+  coverUrl      String?           @map("cover_url") @db.VarChar(1024)
+  playUrl       String            @map("play_url") @db.VarChar(1024)
+  quizUrl       String?           @map("quiz_url") @db.VarChar(1024)
+  subject       String?           @db.VarChar(80)
+  grade         String?           @db.VarChar(80)
+  tags          Json?
+  status        TeacherWorkStatus @default(PUBLISHED)
+  featured      Boolean           @default(false)
+  publishedAt   DateTime          @default(now()) @map("published_at")
+  unpublishedAt DateTime?         @map("unpublished_at")
+  createdAt     DateTime          @default(now()) @map("created_at")
+  updatedAt     DateTime          @updatedAt @map("updated_at")
+  author        User              @relation(fields: [authorId], references: [id], onDelete: Cascade)
+
+  @@index([status, publishedAt])
+  @@index([authorId, status])
+  @@index([title])
+  @@map("teacher_works")
 }
 
 model Account {

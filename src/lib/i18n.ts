@@ -51,6 +51,12 @@ export function loginPath(locale: Locale) {
   return "/login/";
 }
 
+export function teacherEcosystemPath(locale: Locale) {
+  if (locale === "en") return "/en/teacher-ecosystem/";
+  if (locale === "zh-Hant") return "/zh-hant/teacher-ecosystem/";
+  return "/teacher-ecosystem/";
+}
+
 export function isLoginPath(pathname: string) {
   return /(?:^|\/)login\/?$/.test(pathname);
 }
@@ -118,6 +124,7 @@ export type UiMessages = {
     enter: string;
     comingSoon: string;
     author: string;
+    more: string;
   };
   team: {
     label: string;
@@ -300,6 +307,7 @@ const zhUi: UiMessages = {
     enter: "进入课堂体验",
     comingSoon: "VIDEO · 即将上线",
     author: "作者",
+    more: "更多优质案例",
   },
   team: {
     label: "THE PEOPLE BEHIND THE STORY",
@@ -450,6 +458,7 @@ const enUi: UiMessages = {
     enter: "Enter classroom",
     comingSoon: "VIDEO · COMING SOON",
     author: "Author",
+    more: "More teacher cases",
   },
   team: {
     label: "THE PEOPLE BEHIND THE STORY",
@@ -600,6 +609,7 @@ const hantUi: UiMessages = {
     enter: "進入課堂體驗",
     comingSoon: "VIDEO · 即將上線",
     author: "作者",
+    more: "更多優質案例",
   },
   team: {
     label: "THE PEOPLE BEHIND THE STORY",

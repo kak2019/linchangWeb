@@ -2,12 +2,14 @@
 
 import { useState } from "react";
 import Image from "next/image";
+import Link from "next/link";
 import { useI18n } from "@/components/i18n-provider";
 import { cn } from "@/lib/utils";
 import Reveal from "@/components/reveal";
 import SplitHeading from "@/components/split-heading";
 import { SectionLabel } from "@/components/decorations";
 import type { FeaturedCase } from "@/lib/content";
+import { teacherEcosystemPath } from "@/lib/i18n";
 
 function CaseImage({
   item,
@@ -190,6 +192,16 @@ export default function FeaturedCases() {
               );
             })}
           </div>
+        </Reveal>
+
+        <Reveal delay={180} className="mt-10 flex justify-center md:mt-14">
+          <Link
+            href={teacherEcosystemPath(locale)}
+            className="group inline-flex items-center gap-5 border-b border-ink/25 px-2 py-3 text-[12px] tracking-[0.14em] text-ink transition-colors hover:border-cinnabar hover:text-cinnabar"
+          >
+            {copy.more}
+            <span className="transition-transform duration-300 group-hover:translate-x-1" aria-hidden="true">→</span>
+          </Link>
         </Reveal>
       </div>
     </section>
