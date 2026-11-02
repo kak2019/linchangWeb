@@ -1,24 +1,7 @@
-import Image from "next/image";
-import logo from "@/app/icon.png";
+import { BrandLogo as SharedBrandLogo, type BrandLogoProps } from "@narrativeos/ui/brand-logo";
+import logo from "@narrativeos/ui/logo.png";
 import { cn } from "@/lib/utils";
 
-type BrandLogoProps = {
-  size?: number;
-  className?: string;
-};
-
-export default function BrandLogo({
-  size = 42,
-  className,
-}: BrandLogoProps) {
-  return (
-    <Image
-      src={logo}
-      alt=""
-      width={size}
-      height={size}
-      className={cn("shrink-0 rounded-full object-cover", className)}
-      aria-hidden
-    />
-  );
+export default function BrandLogo({ className, ...props }: Omit<BrandLogoProps, "src">) {
+  return <SharedBrandLogo src={logo.src} className={cn("shrink-0 object-cover", className)} {...props} />;
 }

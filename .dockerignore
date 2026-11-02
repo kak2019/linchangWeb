@@ -2,6 +2,8 @@
 .github
 .next
 node_modules
+.env
+.env.*
 out
 npm-debug.log*
 

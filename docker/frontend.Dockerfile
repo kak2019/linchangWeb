@@ -3,7 +3,11 @@
 FROM node:20-alpine AS builder
 WORKDIR /app
 
+ARG NEXT_PUBLIC_WORKBENCH_URL=https://www.narrativeos.cn/narrativeos/
+ENV NEXT_PUBLIC_WORKBENCH_URL=${NEXT_PUBLIC_WORKBENCH_URL}
+
 COPY package.json package-lock.json ./
+COPY packages ./packages
 COPY prisma ./prisma
 RUN npm ci --no-audit --no-fund
 
@@ -20,6 +24,7 @@ ENV HOSTNAME=0.0.0.0
 
 COPY --from=builder /app/package.json /app/package-lock.json ./
 COPY --from=builder /app/node_modules ./node_modules
+COPY --from=builder /app/packages ./packages
 COPY --from=builder /app/.next ./.next
 COPY --from=builder /app/public ./public
 COPY --from=builder /app/prisma ./prisma

@@ -1,0 +1,36 @@
+{
+  "name": "@narrativeos/ui",
+  "version": "0.1.4",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./account-menu.tsx",
+    "./client": "./client.ts",
+    "./session": "./session.ts",
+    "./i18n": "./i18n.ts",
+    "./brand-logo": "./brand-logo.tsx",
+    "./logo.png": "./logo.png",
+    "./styles.css": "./styles.css",
+    "./collection-card": "./collection-card.tsx",
+    "./close-button": "./close-button.tsx"
+  },
+  "files": [
+    "*.ts",
+    "*.tsx",
+    "*.css",
+    "logo.png",
+    "README.md",
+    "verify-release.cjs",
+    "release-manifest.json"
+  ],
+  "scripts": {
+    "check:release": "node verify-release.cjs",
+    "release:manifest": "node verify-release.cjs --write",
+    "prepack": "node verify-release.cjs"
+  },
+  "peerDependencies": {
+    "@radix-ui/react-popover": "^1.1.23",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0"
+  }
+}

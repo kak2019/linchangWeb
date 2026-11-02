@@ -8,6 +8,7 @@ export const navLinks = [
   { label: "灵感", href: "#stories" },
   { label: "团队", href: "#team" },
   { label: "技术", href: "#tech" },
+  { label: "定价", href: `${WORKBENCH_URL.replace(/\/$/, "")}/recharge` },
   { label: "关于我们", href: "#about" },
 ];
 

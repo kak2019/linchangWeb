@@ -1,0 +1,17 @@
+{
+  "version": "0.1.4",
+  "files": {
+    "account-menu.tsx": "a3990d8cb73354b8dda8c4494b4f77df8ba8eab9f49883a51c9c0beeabb5db27",
+    "brand-logo.tsx": "ef0608bc3a19b81a028dcdc717db93457f658e6d220990142e2c87315b7cce17",
+    "client.ts": "236bc0b5184d8cd403e9b2b51ae7a513426e3356898d35c1ce85d0c4c7f4a787",
+    "close-button.module.css": "fa8aee607f3b471d52f2eefb447dc180a2f9715c356f1b9af00a22883c9359b3",
+    "close-button.tsx": "21617876430fa3d3ef31570f1ac94bbed6550740f1af462c844dd6650b607d52",
+    "collection-card.tsx": "9ee3ef9cb00c79d905184454aa12c1f28ea846b6dc27d736cff59c2288f107ba",
+    "i18n.ts": "574421f8e1a276f722a8df70cea0959a57f047d9c1ea6aa7d0c6711240a2c1cf",
+    "logo.png": "cdc260b15954e1664ec1c888758ae446e68d3695dde0b4a0271a9a85242f0eed",
+    "package.json": "6aca0b859300467956100057662095dca08a67a8c166e0ad80931f12661f25f3",
+    "session.ts": "45afe5970242b27cde675e176cea2342de688f5ad2f06c30d42d73d0ca3a1187",
+    "styles.css": "4b2b0893f2b65fe78eaf579040af50c8738d876586dfdc4a692923158f1e2585",
+    "verify-release.cjs": "0933332941b9cf83f4889de545a94500f85e7608f661a49541407b80d0f393a7"
+  }
+}

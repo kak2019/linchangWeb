@@ -1,4 +1,5 @@
 "use client";
+import Link from "next/link";
 
 import { useEffect, useRef, useState, type MouseEvent } from "react";
 import { useLenis } from "lenis/react";
@@ -17,6 +18,7 @@ export default function SiteHeader() {
   const [scrolled, setScrolled] = useState(false);
   const [open, setOpen] = useState(false);
   const [authOpen, setAuthOpen] = useState(false);
+  const [logoutError, setLogoutError] = useState("");
   const [workbenchAuthMode, setWorkbenchAuthMode] = useState<WorkbenchAuthMode | null>(null);
   const authMenuRef = useRef<HTMLDivElement>(null);
   const lenis = useLenis();
@@ -34,6 +36,10 @@ export default function SiteHeader() {
   const onAuthPage = /(^|\/)login\/?$/.test(pathname);
   const accountLabel = (user?.email || user?.nickname || "").trim().charAt(0);
   const showPortalAuth = workbenchAuthMode === "sso" || workbenchAuthMode === "sso_or_invite";
+  async function signOut() {
+    setLogoutError("");
+    try { await logout(); } catch { setLogoutError(messages.ui.account.logoutError); }
+  }
   const languageOptions: Array<{ locale: Locale; label: string; title: string }> = [
     { locale: "zh-CN", label: "简", title: "简体中文" },
     { locale: "en", label: "EN", title: "English" },
@@ -98,6 +104,11 @@ export default function SiteHeader() {
     event: MouseEvent<HTMLAnchorElement>,
     href: string,
   ) => {
+    if (!href.startsWith("#")) {
+      setOpen(false);
+      return;
+    }
+
     if (!onHome) {
       setOpen(false);
       return;
@@ -154,7 +165,7 @@ export default function SiteHeader() {
           {navLinks.map((link, index) => (
             <a
               key={link.href}
-              href={onHome ? link.href : `${homeHref}${link.href}`}
+              href={!link.href.startsWith("#") || onHome ? link.href : `${homeHref}${link.href}`}
               onClick={(event) => goToSection(event, link.href)}
               className="group relative py-2 text-xs text-ink-soft transition-colors hover:text-cinnabar"
             >
@@ -190,12 +201,13 @@ export default function SiteHeader() {
           {showPortalAuth && !loading &&
             (user ? (
               <div className="flex items-center gap-3">
+                <Link href="/account" className="text-xs text-ink-soft hover:text-cinnabar">{locale === "en" ? "Account settings" : "账号设置"}</Link>
                 <span className="flex h-7 w-7 items-center justify-center rounded-full border border-line text-[12px] text-ink">
                   {accountLabel}
                 </span>
                 <button
                   type="button"
-                  onClick={() => void logout()}
+                  onClick={() => void signOut()}
                   className="text-xs text-ink-soft transition-colors hover:text-cinnabar"
                 >
                   {messages.ui.header.logout}
@@ -308,7 +320,7 @@ export default function SiteHeader() {
           {navLinks.map((link, index) => (
             <a
               key={link.href}
-              href={onHome ? link.href : `${homeHref}${link.href}`}
+              href={!link.href.startsWith("#") || onHome ? link.href : `${homeHref}${link.href}`}
               onClick={(event) => goToSection(event, link.href)}
               className="flex items-center justify-between border-b border-line/70 py-3.5 font-serif text-[15px] text-ink"
             >
@@ -318,13 +330,14 @@ export default function SiteHeader() {
               </span>
             </a>
           ))}
+          {showPortalAuth && user && <Link href="/account" className="border-b border-line/70 py-3.5 text-[15px] text-ink">{locale === "en" ? "Account settings" : "账号设置"}</Link>}
           {showPortalAuth && !loading &&
             (user ? (
               <button
                 type="button"
                 onClick={() => {
                   setOpen(false);
-                  void logout();
+                  void signOut();
                 }}
                 className="flex items-center justify-between border-b border-line/70 py-3.5 text-[15px] text-ink"
               >
@@ -392,6 +405,7 @@ export default function SiteHeader() {
           </div>
         </nav>
       </div>
+      {logoutError ? <span role="alert" className="absolute right-5 top-full rounded-md border border-line bg-paper px-3 py-2 text-xs text-cinnabar">{logoutError}</span> : null}
     </header>
   );
 }

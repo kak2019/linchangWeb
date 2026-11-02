@@ -6,6 +6,7 @@ import "@fontsource/noto-serif-sc/400.css";
 import "@fontsource/noto-serif-sc/500.css";
 import "@fontsource/noto-serif-sc/600.css";
 import "@fontsource/ma-shan-zheng/400.css";
+import "@narrativeos/ui/styles.css";
 import "./globals.css";
 import SmoothScroll from "@/components/smooth-scroll";
 import { getLocaleMetadata } from "@/lib/i18n";

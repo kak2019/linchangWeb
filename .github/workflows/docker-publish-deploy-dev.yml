@@ -1,0 +1,202 @@
+name: docker-publish-deploy-development
+
+on:
+  push:
+    branches:
+      - "feature/**"
+      - "feature-*"
+  workflow_dispatch:
+    inputs:
+      deploy:
+        description: "Build, push, and deploy to the Non-Prod Docker host"
+        required: true
+        default: true
+        type: boolean
+      diagnose_only:
+        description: "Check deployment target and inspect current routing without rebuilding"
+        required: false
+        default: false
+        type: boolean
+
+permissions:
+  contents: read
+
+env:
+  REGISTRY: crpi-tuqzw1uka36vt7nh.cn-hangzhou.personal.cr.aliyuncs.com
+  WEBSITE_IMAGE_NAME: acr_namespace_narrativeos/linchangweb-website
+
+concurrency:
+  group: linchang-web-development
+  cancel-in-progress: true
+
+jobs:
+  build:
+    if: ${{ !inputs.diagnose_only && (startsWith(github.ref, 'refs/heads/feature/') || startsWith(github.ref, 'refs/heads/feature-')) }}
+    environment: development
+    runs-on: ubuntu-latest
+    outputs:
+      version_tag: ${{ steps.vars.outputs.version_tag }}
+    steps:
+      - name: Validate deployment target matches public development address
+        env:
+          DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
+          WORKBENCH_URL: ${{ vars.WORKBENCH_URL }}
+        run: |
+          python3 - <<'PY'
+          import os, socket
+          from urllib.parse import urlsplit
+          expected = urlsplit(os.environ['WORKBENCH_URL']).hostname
+          actual = os.environ['DEPLOY_HOST']
+          if not expected or not actual:
+              raise SystemExit('development DEPLOY_HOST and WORKBENCH_URL are required')
+          if not set(socket.gethostbyname_ex(expected)[2]) & set(socket.gethostbyname_ex(actual)[2]):
+              raise SystemExit('DEPLOY_HOST does not match WORKBENCH_URL; configure development Environment SSH secrets instead of inheriting production repository secrets')
+          print('Verified development deployment target matches public address')
+          PY
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
+
+      - name: Check shared UI release identity
+        run: node packages/narrativeos-ui/verify-release.cjs --base-ref HEAD^
+
+      - name: Compute image tag
+        id: vars
+        run: echo "version_tag=dev-sha-${GITHUB_SHA::12}" >> "$GITHUB_OUTPUT"
+
+      - name: Set up Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to Alibaba Cloud Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ secrets.ACR_USERNAME }}
+          password: ${{ secrets.ACR_PASSWORD }}
+
+      - name: Validate development public URL
+        env:
+          WORKBENCH_URL: ${{ vars.WORKBENCH_URL }}
+        run: node scripts/validate-workbench-url.cjs development
+
+      - name: Build and push development website image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: ./docker/frontend.Dockerfile
+          push: true
+          provenance: false
+          sbom: false
+          build-args: |
+            NEXT_PUBLIC_WORKBENCH_URL=${{ vars.WORKBENCH_URL }}
+          tags: ${{ env.REGISTRY }}/${{ env.WEBSITE_IMAGE_NAME }}:${{ steps.vars.outputs.version_tag }}
+          cache-from: type=gha,scope=linchang-web-development
+          cache-to: type=gha,mode=max,scope=linchang-web-development
+
+  deploy:
+    if: ${{ (startsWith(github.ref, 'refs/heads/feature/') || startsWith(github.ref, 'refs/heads/feature-')) && (github.event_name == 'push' || (github.event_name == 'workflow_dispatch' && inputs.deploy)) }}
+    environment: development
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    needs: build
+    steps:
+      - name: Validate deployment target matches public development address
+        env:
+          DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
+          WORKBENCH_URL: ${{ vars.WORKBENCH_URL }}
+        run: |
+          python3 - <<'PY'
+          import os, socket
+          from urllib.parse import urlsplit
+          expected = urlsplit(os.environ['WORKBENCH_URL']).hostname
+          actual = os.environ['DEPLOY_HOST']
+          if not expected or not actual:
+              raise SystemExit('development DEPLOY_HOST and WORKBENCH_URL are required')
+          if not set(socket.gethostbyname_ex(expected)[2]) & set(socket.gethostbyname_ex(actual)[2]):
+              raise SystemExit('DEPLOY_HOST does not match WORKBENCH_URL; configure development Environment SSH secrets instead of inheriting production repository secrets')
+          print('Verified development deployment target matches public address')
+          PY
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Prepare development deployment directory
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.DEPLOY_HOST }}
+          username: ${{ secrets.DEPLOY_USER }}
+          key: ${{ secrets.DEPLOY_SSH_KEY }}
+          script: |
+            set -e
+            sudo install -d -o "$(id -un)" -g "$(id -gn)" "${{ secrets.DEPLOY_PATH }}"
+
+      - name: Upload development deployment files
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.DEPLOY_HOST }}
+          username: ${{ secrets.DEPLOY_USER }}
+          key: ${{ secrets.DEPLOY_SSH_KEY }}
+          source: "docker-compose.dev.yml"
+          target: ${{ secrets.DEPLOY_PATH }}
+
+      - name: Deploy on Non-Prod host
+        uses: appleboy/ssh-action@v1.0.3
+        env:
+          VERSION_TAG: ${{ needs.build.outputs.version_tag }}
+          REGISTRY: ${{ env.REGISTRY }}
+          WEBSITE_IMAGE_NAME: ${{ env.WEBSITE_IMAGE_NAME }}
+          ACR_USERNAME: ${{ secrets.ACR_USERNAME }}
+          ACR_PASSWORD: ${{ secrets.ACR_PASSWORD }}
+          WEBSITE_PORT: ${{ vars.WEBSITE_PORT || '3003' }}
+        with:
+          host: ${{ secrets.DEPLOY_HOST }}
+          username: ${{ secrets.DEPLOY_USER }}
+          key: ${{ secrets.DEPLOY_SSH_KEY }}
+          envs: VERSION_TAG,REGISTRY,WEBSITE_IMAGE_NAME,ACR_USERNAME,ACR_PASSWORD,WEBSITE_PORT
+          command_timeout: 60m
+          script: |
+            set -e
+            mkdir -p "${{ secrets.DEPLOY_PATH }}"
+            cd "${{ secrets.DEPLOY_PATH }}"
+            test -s .env || { echo "Missing development .env in $PWD"; exit 1; }
+            case "$WEBSITE_PORT" in
+              ''|*[!0-9]*) echo "Development WEBSITE_PORT must be numeric"; exit 1 ;;
+            esac
+            test "$WEBSITE_PORT" -ge 1 && test "$WEBSITE_PORT" -le 65535 || { echo "Invalid development WEBSITE_PORT"; exit 1; }
+            test "$WEBSITE_PORT" -ne 3002 || { echo "Development WEBSITE_PORT must not use production port 3002"; exit 1; }
+            export WEBSITE_PORT
+            echo "$ACR_PASSWORD" | docker login "$REGISTRY" -u "$ACR_USERNAME" --password-stdin
+            export WEBSITE_IMAGE="$REGISTRY/$WEBSITE_IMAGE_NAME:$VERSION_TAG"
+            if docker compose version >/dev/null 2>&1; then
+              COMPOSE_CMD="docker compose"
+            elif command -v docker-compose >/dev/null 2>&1; then
+              COMPOSE_CMD="docker-compose"
+            else
+              echo "Neither 'docker compose' nor 'docker-compose' is installed on the remote host."
+              exit 1
+            fi
+            docker network inspect narrativeos-development >/dev/null 2>&1 || docker network create narrativeos-development
+            $COMPOSE_CMD -p linchang-web-development --env-file .env -f docker-compose.dev.yml pull website
+            $COMPOSE_CMD -p linchang-web-development --env-file .env -f docker-compose.dev.yml up -d website
+
+  diagnose:
+    if: ${{ github.event_name == 'workflow_dispatch' && inputs.diagnose_only && (startsWith(github.ref, 'refs/heads/feature/') || startsWith(github.ref, 'refs/heads/feature-')) }}
+    environment: development
+    runs-on: ubuntu-latest
+    steps:
+      - name: Validate deployment target matches public development address
+        env:
+          DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
+          WORKBENCH_URL: ${{ vars.WORKBENCH_URL }}
+        run: |
+          python3 - <<'PY'
+          import os, socket
+          from urllib.parse import urlsplit
+          expected = urlsplit(os.environ['WORKBENCH_URL']).hostname
+          actual = os.environ['DEPLOY_HOST']
+          if not expected or not actual:
+              raise SystemExit('development DEPLOY_HOST and WORKBENCH_URL are required')
+          if not set(socket.gethostbyname_ex(expected)[2]) & set(socket.gethostbyname_ex(actual)[2]):
+              raise SystemExit('DEPLOY_HOST does not match WORKBENCH_URL; configure development Environment SSH secrets instead of inheriting production repository secrets')
+          print('Verified development deployment target matches public address')
+          PY

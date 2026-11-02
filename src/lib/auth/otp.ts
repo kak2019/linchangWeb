@@ -2,10 +2,10 @@ import { getPrisma } from "@/lib/db";
 import { CODE_MAX_ATTEMPTS } from "@/lib/auth/config";
 import { hashOtp, safeEqual } from "@/lib/auth/crypto";
 
-export async function consumeEmailCode(email: string, code: string) {
+export async function consumeEmailCode(email: string, code: string, purpose = "auth", userId: string | null = null) {
   const prisma = getPrisma();
   const record = await prisma.verificationCode.findFirst({
-    where: { email, consumedAt: null },
+    where: { email, purpose, userId, consumedAt: null },
     orderBy: { createdAt: "desc" },
   });
 
@@ -13,7 +13,8 @@ export async function consumeEmailCode(email: string, code: string) {
     return false;
   }
 
-  if (!safeEqual(record.codeHash, hashOtp(email, code))) {
+  const hashKey = purpose === "auth" ? email : `${purpose}:${userId}:${email}`;
+  if (!safeEqual(record.codeHash, hashOtp(hashKey, code))) {
     await prisma.verificationCode.update({
       where: { id: record.id },
       data: { attempts: { increment: 1 } },
@@ -21,9 +22,9 @@ export async function consumeEmailCode(email: string, code: string) {
     return false;
   }
 
-  await prisma.verificationCode.update({
-    where: { id: record.id },
+  const consumed = await prisma.verificationCode.updateMany({
+    where: { id: record.id, consumedAt: null, expiresAt: { gt: new Date() }, attempts: { lt: CODE_MAX_ATTEMPTS } },
     data: { consumedAt: new Date() },
   });
-  return true;
+  return consumed.count === 1;
 }

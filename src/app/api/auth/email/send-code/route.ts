@@ -12,18 +12,37 @@ import {
 import { generateOtp, hashOtp } from "@/lib/auth/crypto";
 import { sendVerificationEmail } from "@/lib/auth/mail";
 import { configErrorResponse, jsonError, jsonOk } from "@/lib/auth/http";
+import { sessionCookieValue } from "@/lib/auth/http";
+import { readSessionUser } from "@/lib/auth/session";
+import { AuthError, requireSameOrigin } from "@/lib/auth/security";
 
 export const dynamic = "force-dynamic";
 
 export async function POST(request: Request) {
   try {
-    let body: { email?: string } = {};
+    let body: { email?: string; purpose?: string } = {};
     try {
-      body = (await request.json()) as { email?: string };
+      body = await request.json();
     } catch {
       return jsonError("请输入有效邮箱", 400);
     }
-    const email = normalizeEmail(body.email ?? "");
+    const purpose = body.purpose ?? "auth";
+    if (!["auth", "bind-email", "set-password"].includes(purpose)) return jsonError("验证码用途无效", 400);
+    let userId: string | null = null;
+    let email = normalizeEmail(typeof body.email === "string" ? body.email : "");
+    if (purpose !== "auth") {
+      requireSameOrigin(request);
+      const user = await readSessionUser(await sessionCookieValue());
+      if (!user) return jsonError("请先登录", 401);
+      userId = user.id;
+      if (purpose === "set-password") {
+        if (!user.email) return jsonError("请先绑定邮箱", 400);
+        email = user.email;
+      } else {
+        if (user.email) return jsonError("当前账号已有绑定邮箱", 409);
+        if (await getPrisma().user.findUnique({where:{email}})) return jsonError("该邮箱已被其他账号使用，不能合并", 409);
+      }
+    }
     if (!isValidEmail(email)) {
       return jsonError("请输入有效邮箱", 400);
     }
@@ -57,7 +76,9 @@ export async function POST(request: Request) {
     await prisma.verificationCode.create({
       data: {
         email,
-        codeHash: hashOtp(email, code),
+        purpose,
+        userId,
+        codeHash: hashOtp(purpose === "auth" ? email : `${purpose}:${userId}:${email}`, code),
         expiresAt: new Date(now.getTime() + CODE_TTL_MS),
         ip,
       },
@@ -68,6 +89,7 @@ export async function POST(request: Request) {
       cooldown: SEND_COOLDOWN_MS / 1000,
     });
   } catch (error) {
+    if (error instanceof AuthError) return jsonError(error.message, error.status);
     console.error("[auth] send-code failed", error);
     return configErrorResponse(error);
   }

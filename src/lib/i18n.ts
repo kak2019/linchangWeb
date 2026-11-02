@@ -1,3 +1,5 @@
+import { accountMessages, type AccountMessages, type UiLocale } from '@narrativeos/ui/i18n';
+import { teacherPlazaMessages, type TeacherPlazaMessages } from './messages/teacher-plaza';
 import type { Metadata } from "next";
 import {
   featuredCases,
@@ -21,7 +23,7 @@ import {
   type TechLayer,
 } from "@/lib/content";
 
-export type Locale = "zh-CN" | "en" | "zh-Hant";
+export type Locale = UiLocale;
 
 export const localePaths = {
   "zh-CN": "/",
@@ -51,11 +53,19 @@ export function loginPath(locale: Locale) {
   return "/login/";
 }
 
+export function teacherEcosystemPath(locale: Locale) {
+  if (locale === "en") return "/en/teacher-ecosystem/";
+  if (locale === "zh-Hant") return "/zh-hant/teacher-ecosystem/";
+  return "/teacher-ecosystem/";
+}
+
 export function isLoginPath(pathname: string) {
   return /(?:^|\/)login\/?$/.test(pathname);
 }
 
 export type UiMessages = {
+  account: AccountMessages;
+  plaza: TeacherPlazaMessages;
   header: {
     brand: string;
     nav: string[];
@@ -118,6 +128,7 @@ export type UiMessages = {
     enter: string;
     comingSoon: string;
     author: string;
+    more: string;
   };
   team: {
     label: string;
@@ -240,9 +251,11 @@ export type LocaleMessages = {
 };
 
 const zhUi: UiMessages = {
+  account: accountMessages['zh-CN'],
+  plaza: teacherPlazaMessages['zh-CN'],
   header: {
     brand: "临场 · AI 叙事课堂生成平台",
-    nav: ["优质案例", "产品", "能力", "灵感", "团队", "技术", "关于我们"],
+    nav: ["优质案例", "产品", "能力", "灵感", "团队", "技术", "定价", "关于我们"],
     backToTop: "返回顶部",
     mainNav: "主导航",
     mobileNav: "移动端导航",
@@ -300,6 +313,7 @@ const zhUi: UiMessages = {
     enter: "进入课堂体验",
     comingSoon: "VIDEO · 即将上线",
     author: "作者",
+    more: "更多优质案例",
   },
   team: {
     label: "THE PEOPLE BEHIND THE STORY",
@@ -390,9 +404,11 @@ const zhUi: UiMessages = {
 };
 
 const enUi: UiMessages = {
+  account: accountMessages['en'],
+  plaza: teacherPlazaMessages['en'],
   header: {
     brand: "Linchang · AI Narrative Classroom Platform",
-    nav: ["Cases", "Products", "Capabilities", "Inspiration", "Team", "Technology", "About"],
+    nav: ["Cases", "Products", "Capabilities", "Inspiration", "Team", "Technology", "Pricing", "About"],
     backToTop: "Back to top",
     mainNav: "Main navigation",
     mobileNav: "Mobile navigation",
@@ -450,6 +466,7 @@ const enUi: UiMessages = {
     enter: "Enter classroom",
     comingSoon: "VIDEO · COMING SOON",
     author: "Author",
+    more: "More teacher cases",
   },
   team: {
     label: "THE PEOPLE BEHIND THE STORY",
@@ -540,9 +557,11 @@ const enUi: UiMessages = {
 };
 
 const hantUi: UiMessages = {
+  account: accountMessages['zh-Hant'],
+  plaza: teacherPlazaMessages['zh-Hant'],
   header: {
     brand: "臨場 · AI 敘事課堂生成平台",
-    nav: ["優質案例", "產品", "能力", "靈感", "團隊", "技術", "關於我們"],
+    nav: ["優質案例", "產品", "能力", "靈感", "團隊", "技術", "定價", "關於我們"],
     backToTop: "返回頂部",
     mainNav: "主導航",
     mobileNav: "移動端導航",
@@ -600,6 +619,7 @@ const hantUi: UiMessages = {
     enter: "進入課堂體驗",
     comingSoon: "VIDEO · 即將上線",
     author: "作者",
+    more: "更多優質案例",
   },
   team: {
     label: "THE PEOPLE BEHIND THE STORY",

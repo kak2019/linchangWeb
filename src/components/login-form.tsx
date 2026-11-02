@@ -1,6 +1,6 @@
 "use client";
 
-import { FormEvent, useEffect, useMemo, useState } from "react";
+import { FormEvent, useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { WORKBENCH_URL } from "@/lib/content";
 import { useI18n } from "@/components/i18n-provider";
@@ -8,22 +8,10 @@ import { useAuthSession } from "@/components/auth-session";
 import { localizedPath, loginPath } from "@/lib/i18n";
 import { WeChatIcon } from "@/components/wechat-community";
 import { cn } from "@/lib/utils";
+import { safeAuthNext } from "@/lib/auth/redirect";
 
 type Mode = "login" | "register";
 type LoginMethod = "password" | "code";
-
-function safeNext(value: string | null) {
-  if (!value) return WORKBENCH_URL;
-  if (value.startsWith("/") && !value.startsWith("//")) return value;
-  try {
-    const url = new URL(value);
-    const workbench = new URL(WORKBENCH_URL);
-    if (url.origin === workbench.origin) return value;
-  } catch {
-    return WORKBENCH_URL;
-  }
-  return WORKBENCH_URL;
-}
 
 const inputClass =
   "h-12 rounded-md border border-line bg-white px-4 text-sm text-ink outline-none transition-colors focus:border-cinnabar/60";
@@ -34,10 +22,8 @@ export default function LoginForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { refresh } = useAuthSession();
-  const nextUrl = useMemo(
-    () => safeNext(searchParams.get("next")),
-    [searchParams],
-  );
+  // Resolve at navigation time so SSR never guesses the browser's portal origin.
+  const nextUrl = () => safeAuthNext(searchParams.get("next"), window.location.origin, WORKBENCH_URL);
   const [mode, setMode] = useState<Mode>(
     searchParams.get("mode") === "register" ? "register" : "login",
   );
@@ -50,7 +36,7 @@ export default function LoginForm() {
   const [submitting, setSubmitting] = useState(false);
   const [cooldown, setCooldown] = useState(0);
   const [message, setMessage] = useState("");
-  const [error, setError] = useState("");
+  const [error, setError] = useState(searchParams.get("error") || "");
 
   useEffect(() => {
     if (cooldown <= 0) return;
@@ -105,7 +91,7 @@ export default function LoginForm() {
       return false;
     }
     await refresh();
-    router.push(nextUrl);
+    router.push(nextUrl());
     return true;
   };
 
@@ -318,16 +304,16 @@ export default function LoginForm() {
             : copy.verify}
       </button>
 
-      <button
-        type="button"
-        disabled
-        title={copy.wechatSoon}
-        className="inline-flex h-12 items-center justify-center gap-2 rounded-md border border-line text-sm text-ink-muted opacity-60"
+      <a
+        href={`/api/auth/wechat/start?next=${encodeURIComponent(searchParams.get("next") || WORKBENCH_URL)}`}
+        onClick={(event) => {
+          event.currentTarget.href = `/api/auth/wechat/start?next=${encodeURIComponent(nextUrl())}`;
+        }}
+        className="inline-flex h-12 items-center justify-center gap-2 rounded-md border border-line text-sm text-ink transition-colors hover:bg-paper"
       >
         <WeChatIcon className="h-4 w-4" />
         {copy.wechat}
-        <span className="text-[10px] tracking-wide">{copy.wechatSoon}</span>
-      </button>
+      </a>
 
       <a
         href={localizedPath(locale)}

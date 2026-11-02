@@ -18,20 +18,30 @@ permissions:
 env:
   REGISTRY: crpi-tuqzw1uka36vt7nh.cn-hangzhou.personal.cr.aliyuncs.com
   WEBSITE_IMAGE_NAME: acr_namespace_narrativeos/linchangweb-website
+  WORKBENCH_URL: https://www.narrativeos.cn/narrativeos/
 
-# Only the newest main-branch deployment is useful; cancel stale builds/deploys.
+# Only the newest production deployment is useful; cancel stale builds/deploys.
 concurrency:
   group: linchang-web-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
   build:
+    if: ${{ github.ref == 'refs/heads/main' }}
     runs-on: ubuntu-latest
     outputs:
       version_tag: ${{ steps.vars.outputs.version_tag }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
+
+      - name: Check shared UI release identity
+        run: node packages/narrativeos-ui/verify-release.cjs --base-ref HEAD^
+
+      - name: Validate production public URL
+        run: node scripts/validate-workbench-url.cjs production
 
       - name: Compute image tag
         id: vars
@@ -65,13 +75,15 @@ jobs:
           # Alibaba Cloud Personal ACR does not accept Buildx attestation manifests.
           provenance: false
           sbom: false
+          build-args: |
+            NEXT_PUBLIC_WORKBENCH_URL=${{ env.WORKBENCH_URL }}
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
           cache-from: type=gha,scope=linchang-web
           cache-to: type=gha,mode=max,scope=linchang-web
 
   deploy:
-    if: ${{ github.event_name == 'push' || (github.event_name == 'workflow_dispatch' && inputs.deploy) }}
+    if: ${{ github.ref == 'refs/heads/main' && (github.event_name == 'push' || (github.event_name == 'workflow_dispatch' && inputs.deploy)) }}
     runs-on: ubuntu-latest
     timeout-minutes: 60
     needs:
@@ -133,9 +145,9 @@ jobs:
               echo "[$(date -Is)] $name failed after retries"
               return 1
             }
-            timed_retry "pull website image" $COMPOSE_CMD -f docker-compose.prod.yml pull website
+            timed_retry "pull website image" $COMPOSE_CMD -p linchang-web -f docker-compose.prod.yml pull website
             echo "[$(date -Is)] Starting docker compose up"
-            $COMPOSE_CMD -f docker-compose.prod.yml up -d
+            $COMPOSE_CMD -p linchang-web -f docker-compose.prod.yml up -d
             echo "[$(date -Is)] Finished docker compose up"
             # Keep cleanup out of the deployment critical path; run it separately
             # during maintenance so a deploy is not delayed by Docker disk scans.
