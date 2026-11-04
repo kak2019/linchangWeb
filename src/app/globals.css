@@ -358,12 +358,17 @@
 
   /* 滚动进入动画 */
   .reveal {
-    opacity: 0;
-    transform: translateY(36px);
+    opacity: 1;
+    transform: none;
     transition:
       opacity 0.8s cubic-bezier(0.2, 0.8, 0.2, 1),
       transform 0.8s cubic-bezier(0.2, 0.8, 0.2, 1);
     will-change: opacity, transform;
+  }
+
+  .reveal.is-pending {
+    opacity: 0;
+    transform: translateY(36px);
   }
 
   .reveal.is-visible {
@@ -466,6 +471,80 @@
       transform: scale(2.7);
       opacity: 0;
     }
+  }
+}
+
+/* The opening decoration must never depend on JavaScript to reveal the page. */
+.hero-intro-curtain {
+  display: none;
+  pointer-events: none;
+}
+
+@keyframes hero-intro-dismiss {
+  to { visibility: hidden; }
+}
+
+@keyframes hero-curtain-up {
+  to { transform: translateY(-100%); }
+}
+
+@keyframes hero-curtain-down {
+  to { transform: translateY(100%); }
+}
+
+@keyframes hero-curtain-mark-out {
+  to { opacity: 0; scale: 0.75; }
+}
+
+@media (hover: hover) and (pointer: fine) and (prefers-reduced-motion: no-preference) {
+  .hero-intro-curtain {
+    display: block;
+    animation: hero-intro-dismiss 1.45s step-end forwards;
+  }
+
+  .hero-curtain-top {
+    animation: hero-curtain-up 900ms 420ms cubic-bezier(0.72, 0, 0.2, 1) forwards;
+  }
+
+  .hero-curtain-bottom {
+    animation: hero-curtain-down 900ms 420ms cubic-bezier(0.72, 0, 0.2, 1) forwards;
+  }
+
+  .hero-curtain-mark {
+    animation: hero-curtain-mark-out 500ms 420ms ease forwards;
+  }
+}
+
+/* Touch tablets can have desktop-sized viewports, including with a trackpad. */
+@media (hover: none), (any-pointer: coarse) {
+  .hero-intro-curtain {
+    display: none;
+  }
+
+  .home-hero,
+  .home-hero .hero-viewport,
+  .home-hero .hero-content {
+    height: auto;
+    min-height: 100svh;
+  }
+
+  .home-hero .hero-viewport {
+    position: relative;
+  }
+
+  .home-hero .animate-pan,
+  .home-hero .animate-ink-breathe {
+    animation: none;
+  }
+
+  .home-hero .hero-line-char,
+  .home-hero .hero-fade {
+    opacity: 1 !important;
+    transform: none !important;
+  }
+
+  .home-hero .hero-brush-path {
+    stroke-dashoffset: 0;
   }
 }
 

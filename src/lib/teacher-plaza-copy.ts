@@ -2,7 +2,7 @@ export const copyByLocale = {
   "zh-CN": {
     eyebrow: "TEACHER CREATOR COMMUNITY",
     title: "教师创作生态",
-    description: "来自一线教师的叙事课堂作品。寻找灵感，打开作品，并把优秀实践带回自己的课堂。",
+    description: "发现老师们的互动课件与叙事作品，让知识可探索、可体验。",
     search: "搜索作品标题",
     searchButton: "搜索",
     clear: "清除搜索",
@@ -19,7 +19,7 @@ export const copyByLocale = {
   en: {
     eyebrow: "TEACHER CREATOR COMMUNITY",
     title: "Teacher creations",
-    description: "Narrative classroom experiences made by teachers. Find an idea, open a work, and bring strong practice back to your classroom.",
+    description: "Explore interactive lessons and stories made by teachers. Bring a new discovery into your classroom.",
     search: "Search by title",
     searchButton: "Search",
     clear: "Clear",
@@ -36,7 +36,7 @@ export const copyByLocale = {
   "zh-Hant": {
     eyebrow: "TEACHER CREATOR COMMUNITY",
     title: "教師創作生態",
-    description: "來自一線教師的敘事課堂作品。尋找靈感，打開作品，並把優秀實踐帶回自己的課堂。",
+    description: "發現老師們的互動課件與敘事作品，讓知識可探索、可體驗。",
     search: "搜尋作品標題",
     searchButton: "搜尋",
     clear: "清除搜尋",
@@ -53,7 +53,7 @@ export const copyByLocale = {
 } as const;
 
 export const plazaLabels = {
-  "zh-CN": { title: "把好故事，带进课堂。", plaza: "教师资源广场", collection: "课堂资源", pick: "本期精选", preview: "查看作品", subject: "学科领域", grade: "适用年级", all: "全部", featured: "精选优先", latest: "最新发布", note: "课堂笺", noCover: "暂无封面", close: "关闭作品预览", about: "作品介绍", details: "适用信息", published: "发布时间", resource: "叙事课堂 · 教师共创", browse: "找到适合你课堂的故事", hint: "按学科与年级，寻找课堂灵感。", error: "作品列表暂时无法加载", retry: "重新加载", errorHint: "请稍后重试。", footer: "每一份课堂灵感，都来自一次用心的创作。" },
-  en: { title: "Bring a good story into class.", plaza: "Teacher resources", collection: "Classroom collection", pick: "Featured work", preview: "Preview work", subject: "Subject", grade: "Grade", all: "All", featured: "Featured first", latest: "Newest", note: "Classroom note", noCover: "No cover yet", close: "Close preview", about: "About this work", details: "Classroom information", published: "Published", resource: "Narrative classrooms · Teacher creations", browse: "Find a story for your classroom", hint: "Explore by subject and grade.", error: "Unable to load resources", retry: "Try again", errorHint: "Please try again later.", footer: "Every classroom idea begins with a thoughtful creation." },
-  "zh-Hant": { title: "把好故事，帶進課堂。", plaza: "教師資源廣場", collection: "課堂資源", pick: "本期精選", preview: "查看作品", subject: "學科領域", grade: "適用年級", all: "全部", featured: "精選優先", latest: "最新發布", note: "課堂箋", noCover: "暫無封面", close: "關閉作品預覽", about: "作品介紹", details: "適用資訊", published: "發布時間", resource: "敘事課堂 · 教師共創", browse: "找到適合你課堂的故事", hint: "按學科與年級，尋找課堂靈感。", error: "作品列表暫時無法載入", retry: "重新載入", errorHint: "請稍後重試。", footer: "每一份課堂靈感，都來自一次用心的創作。" },
+  "zh-CN": { title: "给课堂，多一点惊喜。", formats: "互动课件 · 叙事课堂 · 讲评练", plaza: "教师资源广场", collection: "课堂资源", pick: "本期精选", preview: "查看作品", subject: "学科领域", grade: "适用年级", all: "全部", featured: "精选优先", latest: "最新发布", note: "课堂笺", noCover: "暂无封面", close: "关闭作品预览", about: "作品介绍", details: "适用信息", published: "发布时间", resource: "叙事课堂 · 教师共创", browse: "发现课堂灵感", hint: "按学科与年级，寻找课堂灵感。", error: "作品列表暂时无法加载", retry: "重新加载", errorHint: "请稍后重试。", footer: "每一份课堂灵感，都来自一次用心的创作。" },
+  en: { title: "A little wonder. A better lesson.", formats: "Interactive lessons · Stories · Practice", plaza: "Teacher resources", collection: "Classroom collection", pick: "Featured work", preview: "Preview work", subject: "Subject", grade: "Grade", all: "All", featured: "Featured first", latest: "Newest", note: "Classroom note", noCover: "No cover yet", close: "Close preview", about: "About this work", details: "Classroom information", published: "Published", resource: "Narrative classrooms · Teacher creations", browse: "Discover your next lesson", hint: "Explore by subject and grade.", error: "Unable to load resources", retry: "Try again", errorHint: "Please try again later.", footer: "Every classroom idea begins with a thoughtful creation." },
+  "zh-Hant": { title: "給課堂，多一點驚喜。", formats: "互動課件 · 敘事課堂 · 講評練", plaza: "教師資源廣場", collection: "課堂資源", pick: "本期精選", preview: "查看作品", subject: "學科領域", grade: "適用年級", all: "全部", featured: "精選優先", latest: "最新發布", note: "課堂箋", noCover: "暫無封面", close: "關閉作品預覽", about: "作品介紹", details: "適用資訊", published: "發布時間", resource: "敘事課堂 · 教師共創", browse: "發現課堂靈感", hint: "按學科與年級，尋找課堂靈感。", error: "作品列表暫時無法載入", retry: "重新載入", errorHint: "請稍後重試。", footer: "每一份課堂靈感，都來自一次用心的創作。" },
 } as const;

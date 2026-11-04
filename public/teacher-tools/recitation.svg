@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1000" height="660" viewBox="0 0 1000 660">
+  <rect width="1000" height="660" fill="#ebece2"/>
+  <circle cx="927" cy="69" r="174" fill="#dde2d2"/>
+  <path d="M70 516q190-150 390 0t470 0" fill="none" stroke="#ccd3bf"/>
+  <g transform="translate(158 68) rotate(-4 330 255)">
+    <rect x="9" y="13" width="684" height="505" rx="5" fill="#354735" opacity=".09"/>
+    <rect width="684" height="505" rx="5" fill="#fffdf7"/>
+    <path d="M44 36h596M44 457h596" stroke="#ded8c5"/>
+    <text x="53" y="78" fill="#839174" font-size="13" letter-spacing="5" font-family="serif">READ · RECALL · REMEMBER</text>
+    <text x="51" y="148" fill="#3e5144" font-size="51" font-family="serif">拾句 · 背诵练习</text>
+    <text x="55" y="191" fill="#9c9a86" font-size="16" font-family="sans-serif">留一点空白，让记忆自己接上。</text>
+    <text x="55" y="270" fill="#454b3e" font-size="31" font-family="serif" letter-spacing="5">落霞与</text>
+    <rect x="184" y="242" width="35" height="35" rx="3" fill="#edf0e6" stroke="#9ba98b" stroke-dasharray="3 3"/>
+    <text x="227" y="270" fill="#454b3e" font-size="31" font-family="serif" letter-spacing="5">鹜齐飞，</text>
+    <text x="55" y="331" fill="#454b3e" font-size="31" font-family="serif" letter-spacing="5">秋水共长</text>
+    <rect x="200" y="303" width="35" height="35" rx="3" fill="#edf0e6" stroke="#9ba98b" stroke-dasharray="3 3"/>
+    <text x="243" y="331" fill="#454b3e" font-size="31" font-family="serif" letter-spacing="5">一色。</text>
+    <rect x="54" y="384" width="171" height="43" rx="21" fill="#41553f"/>
+    <text x="139" y="412" text-anchor="middle" fill="#fffdf7" font-size="16" font-family="sans-serif">↻ 换一轮留白</text>
+    <text x="251" y="412" fill="#899378" font-size="14" font-family="sans-serif">名篇开练 / 随机换题 / 分段记忆</text>
+  </g>
+  <g transform="translate(798 479) rotate(8)"><rect width="72" height="72" rx="4" fill="#ac6353"/><text x="36" y="47" text-anchor="middle" fill="#fff8ed" font-size="30" font-family="serif">拾句</text></g>
+</svg>

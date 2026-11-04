@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1000" height="660" viewBox="0 0 1000 660">
+  <rect width="1000" height="660" fill="#e9ece7"/>
+  <circle cx="900" cy="35" r="200" fill="#dde4dc"/>
+  <path d="M23 542q200-100 400 0t550 0" fill="none" stroke="#cfd8cd"/>
+  <g transform="translate(119 57) rotate(-3 375 269)">
+    <rect x="9" y="12" width="756" height="535" rx="10" fill="#4e6061" opacity=".09"/>
+    <rect width="756" height="535" rx="10" fill="#fffdf4"/>
+    <text x="44" y="52" font-family="sans-serif" font-size="11" letter-spacing="4" fill="#9aa695">ONE VERSE LEADS TO ANOTHER</text>
+    <text x="44" y="112" font-family="serif" font-size="38" fill="#506874">诗词接龙 · 上下句闯关</text>
+    <path d="M44 144h668" stroke="#e7e3d3"/>
+    <rect x="272" y="175" width="205" height="34" rx="17" fill="#faf2df" stroke="#e7d9bc"/>
+    <text x="375" y="198" text-anchor="middle" fill="#b19764" font-size="14" font-family="sans-serif">第 01 关 · 请接下一句</text>
+    <text x="375" y="273" text-anchor="middle" fill="#536a73" font-size="38" letter-spacing="6" font-family="serif">白日依山尽，</text>
+    <text x="375" y="338" text-anchor="middle" fill="#b7b398" font-size="30" letter-spacing="8" font-family="serif">待你来接 ···</text>
+    <rect x="90" y="386" width="274" height="58" rx="7" fill="#edf3e6" stroke="#c9d8bf"/>
+    <text x="115" y="422" fill="#8da477" font-family="sans-serif" font-size="14">A</text>
+    <text x="240" y="423" text-anchor="middle" fill="#73886a" font-size="23" font-family="serif">黄河入海流</text>
+    <rect x="386" y="386" width="274" height="58" rx="7" fill="#fbfcf4" stroke="#e1e7d6"/>
+    <text x="411" y="422" fill="#b0baa0" font-family="sans-serif" font-size="14">B</text>
+    <text x="532" y="423" text-anchor="middle" fill="#a1ad91" font-size="23" font-family="serif">低头思故乡</text>
+    <text x="375" y="491" text-anchor="middle" fill="#a5b099" font-size="12" font-family="sans-serif">三档难度 / 上下句混合 / 十关一轮 / 错题重练</text>
+  </g>
+  <g transform="translate(831 492) rotate(7)"><rect width="61" height="61" rx="4" fill="#a96456"/><text x="30" y="41" text-anchor="middle" fill="#fff8e9" font-family="serif" font-size="27">诗</text></g>
+</svg>

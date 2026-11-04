@@ -8,7 +8,7 @@ export function parseFilters(values: Record<string,string|string[]|undefined>): 
   const filters:TeacherWorkFilters={};
   for(const key of multiFilterKeys) filters[key]=[...new Set((Array.isArray(values[key])?values[key]:[values[key]||'']).map(x=>x.trim().slice(0,100)).filter(Boolean))].slice(0,30);
   filters.sort=(['latest','oldest','title'].includes(text('sort'))?text('sort'):'featured') as TeacherWorkFilters['sort'];
-  filters.resource=['quiz','story-only'].includes(text('resource'))?text('resource'):'';
+  filters.resource=['quiz','story-only','printable'].includes(text('resource'))?text('resource'):'';
   filters.author=text('author'); filters.tagMode=text('tagMode')==='all'?'all':'any'; filters.featuredOnly=text('featuredOnly')==='1'?'1':'';
   for(const key of ['after','before'] as const){const value=text(key);filters[key]=/^\d{4}-\d{2}-\d{2}$/.test(value)&&!Number.isNaN(Date.parse(value))&&new Date(value).toISOString().slice(0,10)===value?value:'';}
   if(filters.after&&filters.before&&filters.after>filters.before) [filters.after,filters.before]=[filters.before,filters.after];
@@ -31,6 +31,7 @@ export function teacherWorkWhere(query:string,filters:TeacherWorkFilters):Prisma
  if(filters.tag?.length){const clauses=filters.tag.map(tag=>({tags:{array_contains:[tag]}}));AND.push(filters.tagMode==='all'?{AND:clauses}:{OR:clauses});}
  if(filters.resource==='quiz')AND.push({quizUrl:{not:null},NOT:{quizUrl:''}});
  if(filters.resource==='story-only')AND.push({OR:[{quizUrl:null},{quizUrl:''}]});
+ if(filters.resource==='printable')AND.push({tags:{array_contains:['可打印']}});
  if(filters.featuredOnly==='1')AND.push({featured:true});
  if(filters.author)AND.push({author:{nickname:{contains:filters.author}}});
  if(filters.after)AND.push({publishedAt:{gte:new Date(filters.after+'T00:00:00+08:00')}});

@@ -14,6 +14,7 @@ const zh = {
   "author": "创作者",
   "enter": "开始体验",
   "practice": "讲评练",
+  "printable": "可打印工具",
   "previous": "上一页",
   "next": "下一页",
   "feed": {
@@ -53,6 +54,7 @@ export const teacherPlazaMessages: Record<UiLocale, TeacherPlazaMessages> = {
   "author": "Creator",
   "enter": "Open experience",
   "practice": "Review & practice",
+  "printable": "Printable tools",
   "previous": "Previous",
   "next": "Next",
   "feed": {
@@ -89,6 +91,7 @@ export const teacherPlazaMessages: Record<UiLocale, TeacherPlazaMessages> = {
   "author": "創作者",
   "enter": "開始體驗",
   "practice": "講評練",
+  "printable": "可列印工具",
   "previous": "上一頁",
   "next": "下一頁",
   "feed": {

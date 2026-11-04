@@ -179,3 +179,28 @@ export async function DELETE(request: Request) {
     return configErrorResponse(error);
   }
 }
+
+
+// Cover-only updates must preserve publication dates, tags and archive state.
+export async function PATCH(request: Request) {
+  const denied = authError(request);
+  if (denied) return denied;
+  try {
+    const body = (await request.json()) as PublicationPayload;
+    const ownerUserId = requiredText(body.ownerUserId, "用户 ID", 191);
+    const jobId = requiredText(body.jobId, "任务 ID", 32);
+    if (!/^[a-f0-9]{32}$/.test(jobId)) return jsonError("任务 ID 格式无效", 400);
+    const coverUrl = httpUrl(body.coverUrl, "封面地址", true);
+    const result = await getPrisma().teacherWork.updateMany({
+      where: { jobId, authorId: ownerUserId }, data: { coverUrl },
+    });
+    if (!result.count) return jsonError("未找到可更新封面的作品", 404);
+    return NextResponse.json({ updated: true, coverUrl });
+  } catch (error) {
+    if (error instanceof SyntaxError || (error instanceof Error && /不能为空|不能超过|格式无效|必须是|Invalid URL/.test(error.message))) {
+      return jsonError(error instanceof Error ? error.message : "请求内容无效", 400);
+    }
+    console.error("[teacher-ecosystem] cover update failed", error);
+    return configErrorResponse(error);
+  }
+}

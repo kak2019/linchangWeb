@@ -25,3 +25,18 @@ test('publication accepts 64 tags without truncation and rejects 65',()=>{
  assert.equal(box.exports.normalizeForTest(payload).tags.length,64);
  assert.throws(()=>box.exports.normalizeForTest({...payload,tags:[...payload.tags,'65th']}),/64/);
 });
+
+test('cover-only PATCH preserves publication state, time and metadata',async()=>{
+ const source=fs.readFileSync('src/app/api/teacher-ecosystem/internal/works/route.ts','utf8');
+ const box={exports:{}};const calls=[];
+ const dependencies={
+  'next/server':{NextResponse:{json:body=>body}},
+  '@/lib/auth/http':{jsonError:(message,status)=>({message,status}),configErrorResponse:()=>({status:500})},
+  '@/lib/db':{getPrisma:()=>({teacherWork:{updateMany:async args=>{calls.push(args);return {count:1}}}})},
+  '@/lib/teacher-ecosystem':{internalServiceAuthStatus:()=> 'ok'},
+ };
+ vm.runInNewContext(ts.transpileModule(source,{compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2020}}).outputText,{exports:box.exports,module:box,URL,console,require:id=>dependencies[id]||{}});
+ const result=await box.exports.PATCH({json:async()=>({ownerUserId:'author',jobId:'a'.repeat(32),coverUrl:'https://example.com/cover.webp',tags:['must-not-update'],status:'PUBLISHED'})});
+ assert.equal(result.updated,true);
+ assert.equal(JSON.stringify(calls[0]),JSON.stringify({where:{jobId:'a'.repeat(32),authorId:'author'},data:{coverUrl:'https://example.com/cover.webp'}}));
+});

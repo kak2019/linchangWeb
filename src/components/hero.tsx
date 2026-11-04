@@ -17,6 +17,9 @@ import BrandLogo from "@/components/brand-logo";
 
 gsap.registerPlugin(useGSAP, ScrollTrigger);
 
+const DESKTOP_INPUT_QUERY = "(hover: hover) and (pointer: fine)";
+const TOUCH_INPUT_QUERY = "(any-pointer: coarse)";
+
 function HeroChars({ text, id }: { text: string; id: string }) {
   return text.split(/(\s+)/).map((token, tokenIndex) => {
     if (!token) return null;
@@ -56,97 +59,86 @@ export default function Hero() {
   const startedRef = useRef(false);
   const playbackTimelineRef = useRef<gsap.core.Timeline | null>(null);
   const [videoReady, setVideoReady] = useState(false);
-  const [introDone, setIntroDone] = useState(false);
-  const [curtainGone, setCurtainGone] = useState(false);
   const reducedMotion = usePrefersReducedMotion();
   const { locale, messages } = useI18n();
   const copy = messages.ui.hero;
 
-  useEffect(() => {
-    const openTimer = setTimeout(() => setIntroDone(true), 420);
-    const removeTimer = setTimeout(() => setCurtainGone(true), 1450);
-    return () => {
-      clearTimeout(openTimer);
-      clearTimeout(removeTimer);
-    };
-  }, []);
-
-  useEffect(() => {
-    if (curtainGone) {
-      requestAnimationFrame(() => ScrollTrigger.refresh());
-    }
-  }, [curtainGone]);
-
   const beginPlayback = useCallback(() => {
-    if (startedRef.current || !curtainGone) return;
+    const video = videoRef.current;
+    if (startedRef.current || !video) return;
     startedRef.current = true;
 
-    const charsLine1 = gsap.utils.toArray<HTMLElement>(
-      ".hero-line-1 .hero-line-char",
-      sectionRef.current,
-    );
-    const charsLine2 = gsap.utils.toArray<HTMLElement>(
-      ".hero-line-2 .hero-line-char",
-      sectionRef.current,
-    );
-    const fades = gsap.utils.toArray<HTMLElement>(
-      ".hero-fade",
-      sectionRef.current,
-    );
+    // Call play within the tap handler. Safari can reject delayed playback;
+    // keep the title and links visible unless playback actually starts.
+    void video.play().then(() => {
+      if (
+        !startedRef.current || reducedMotion ||
+        !window.matchMedia(DESKTOP_INPUT_QUERY).matches ||
+        window.matchMedia(TOUCH_INPUT_QUERY).matches
+      ) return;
 
-    playbackTimelineRef.current?.kill();
-    const timeline = gsap.timeline({ delay: 0.05 });
-    playbackTimelineRef.current = timeline;
-    timeline
-      .to(
-        charsLine1,
-        {
-          xPercent: -160,
-          opacity: 0,
-          duration: 0.85,
-          ease: "power2.in",
-          stagger: 0.035,
-        },
-        0,
-      )
-      .to(
-        charsLine2,
-        {
-          xPercent: 160,
-          opacity: 0,
-          duration: 0.85,
-          ease: "power2.in",
-          stagger: 0.035,
-        },
-        0,
-      )
-      .to(
-        ".hero-brush-path",
-        { opacity: 0, duration: 0.4, ease: "power2.in" },
-        0,
-      )
-      .to(
-        fades,
-        {
-          opacity: 0,
-          yPercent: -20,
-          duration: 0.55,
-          ease: "power2.in",
-          stagger: 0.05,
-        },
-        0.05,
-      )
-      .call(
-        () => {
-          videoRef.current?.play().catch(() => {});
-        },
-        undefined,
-        0.98,
+      const charsLine1 = gsap.utils.toArray<HTMLElement>(
+        ".hero-line-1 .hero-line-char",
+        sectionRef.current,
       );
-  }, [curtainGone]);
+      const charsLine2 = gsap.utils.toArray<HTMLElement>(
+        ".hero-line-2 .hero-line-char",
+        sectionRef.current,
+      );
+      const fades = gsap.utils.toArray<HTMLElement>(
+        ".hero-fade",
+        sectionRef.current,
+      );
+
+      playbackTimelineRef.current?.kill();
+      const timeline = gsap.timeline({ delay: 0.05 });
+      playbackTimelineRef.current = timeline;
+      timeline
+        .to(
+          charsLine1,
+          {
+            xPercent: -160,
+            opacity: 0,
+            duration: 0.85,
+            ease: "power2.in",
+            stagger: 0.035,
+          },
+          0,
+        )
+        .to(
+          charsLine2,
+          {
+            xPercent: 160,
+            opacity: 0,
+            duration: 0.85,
+            ease: "power2.in",
+            stagger: 0.035,
+          },
+          0,
+        )
+        .to(
+          ".hero-brush-path",
+          { opacity: 0, duration: 0.4, ease: "power2.in" },
+          0,
+        )
+        .to(
+          fades,
+          {
+            opacity: 0,
+            yPercent: -20,
+            duration: 0.55,
+            ease: "power2.in",
+            stagger: 0.05,
+          },
+          0.05,
+        );
+    }).catch(() => {
+      startedRef.current = false;
+    });
+  }, [reducedMotion]);
 
   const restoreIntroContent = useCallback(() => {
-    if (!startedRef.current || !curtainGone) return;
+    if (!startedRef.current) return;
     startedRef.current = false;
     playbackTimelineRef.current?.kill();
     playbackTimelineRef.current = null;
@@ -185,23 +177,36 @@ export default function Hero() {
       duration: 0.35,
       ease: "power2.out",
     });
-  }, [curtainGone]);
+  }, []);
+
+  useEffect(() => () => {
+    startedRef.current = false;
+    playbackTimelineRef.current?.kill();
+  }, []);
 
   useEffect(() => {
     const onScroll = () => {
+      if (
+        reducedMotion || !window.matchMedia(DESKTOP_INPUT_QUERY).matches ||
+        window.matchMedia(TOUCH_INPUT_QUERY).matches
+      ) return;
       if (window.scrollY > 30) beginPlayback();
       else restoreIntroContent();
     };
     window.addEventListener("scroll", onScroll, { passive: true });
     return () => window.removeEventListener("scroll", onScroll);
-  }, [beginPlayback, restoreIntroContent]);
+  }, [beginPlayback, restoreIntroContent, reducedMotion]);
 
   useGSAP(
     () => {
       if (reducedMotion) return;
 
       const mm = gsap.matchMedia();
-      mm.add("(min-width: 1024px)", () => {
+      mm.add({
+        desktop: `(min-width: 1024px) and ${DESKTOP_INPUT_QUERY}`,
+        touch: TOUCH_INPUT_QUERY,
+      }, (context) => {
+        if (!context.conditions?.desktop || context.conditions.touch) return;
         if (!sectionRef.current || !mediaRef.current) return;
 
         gsap.fromTo(
@@ -224,7 +229,7 @@ export default function Hero() {
 
       return () => mm.revert();
     },
-    { scope: sectionRef, dependencies: [reducedMotion] },
+    { scope: sectionRef, dependencies: [reducedMotion], revertOnUpdate: true },
   );
 
   useGSAP(
@@ -244,51 +249,51 @@ export default function Hero() {
         return;
       }
 
-      if (!introDone) {
-        gsap.set(chars, { yPercent: 45, opacity: 0 });
-        gsap.set(fades, { y: 18, opacity: 0 });
-        return;
-      }
+      const mm = gsap.matchMedia();
+      mm.add({ desktop: DESKTOP_INPUT_QUERY, touch: TOUCH_INPUT_QUERY }, (context) => {
+        if (!context.conditions?.desktop || context.conditions.touch) return;
+        const underlineDelay = chars.length * 0.045 + 0.5;
+        gsap
+          .timeline({ delay: 0.54 })
+          .fromTo(
+            chars,
+            { yPercent: 45, opacity: 0 },
+            {
+              yPercent: 0,
+              opacity: 1,
+              duration: 0.9,
+              ease: "power4.out",
+              stagger: 0.045,
+            },
+            0,
+          )
+          .fromTo(
+            fades,
+            { y: 18, opacity: 0 },
+            {
+              y: 0,
+              opacity: 1,
+              duration: 0.7,
+              ease: "power3.out",
+              stagger: 0.09,
+            },
+            0.4,
+          )
+          .fromTo(
+            ".hero-brush-path",
+            { strokeDashoffset: 1 },
+            {
+              strokeDashoffset: 0,
+              duration: 0.85,
+              ease: "power2.inOut",
+            },
+            underlineDelay,
+          );
+      });
 
-      const underlineDelay = chars.length * 0.045 + 0.5;
-      gsap
-        .timeline({ delay: 0.12 })
-        .fromTo(
-          chars,
-          { yPercent: 45, opacity: 0 },
-          {
-            yPercent: 0,
-            opacity: 1,
-            duration: 0.9,
-            ease: "power4.out",
-            stagger: 0.045,
-          },
-          0,
-        )
-        .fromTo(
-          fades,
-          { y: 18, opacity: 0 },
-          {
-            y: 0,
-            opacity: 1,
-            duration: 0.7,
-            ease: "power3.out",
-            stagger: 0.09,
-          },
-          0.4,
-        )
-        .fromTo(
-          ".hero-brush-path",
-          { strokeDashoffset: 1 },
-          {
-            strokeDashoffset: 0,
-            duration: 0.85,
-            ease: "power2.inOut",
-          },
-          underlineDelay,
-        );
+      return () => mm.revert();
     },
-    { scope: sectionRef, dependencies: [introDone, reducedMotion, locale] },
+    { scope: sectionRef, dependencies: [reducedMotion, locale], revertOnUpdate: true },
   );
 
   const onSectionClick = (event: MouseEvent<HTMLElement>) => {
@@ -302,9 +307,9 @@ export default function Hero() {
       ref={sectionRef}
       id="top"
       onClick={onSectionClick}
-      className="relative h-[200svh] cursor-pointer bg-night text-paper-soft lg:h-[260svh]"
+      className="home-hero relative h-[200svh] cursor-pointer bg-night text-paper-soft lg:h-[260svh]"
     >
-      <div className="sticky top-0 h-[100svh] overflow-hidden">
+      <div className="hero-viewport sticky top-0 h-[100svh] overflow-hidden">
       {/* 视频背景 */}
       <div
         ref={mediaRef}
@@ -317,7 +322,7 @@ export default function Hero() {
           muted
           loop
           playsInline
-          preload="auto"
+          preload="none"
           poster="/hero-poster.jpg"
           onPlaying={() => setVideoReady(true)}
         >
@@ -349,7 +354,7 @@ export default function Hero() {
       />
 
       {/* 主体内容 */}
-      <div className="relative z-10 flex h-full flex-col items-center justify-center px-5 pb-28 pt-28 text-center md:px-10">
+      <div className="hero-content relative z-10 flex h-full flex-col items-center justify-center px-5 pb-28 pt-28 text-center md:px-10">
         <div className="flex max-w-[880px] flex-col items-center">
           <span className="hero-fade inline-flex items-center gap-2.5 rounded-full border border-paper-soft/25 bg-night/35 px-4 py-1.5 text-[11px] tracking-wide text-paper-soft/90 backdrop-blur-sm">
             <i
@@ -429,43 +434,35 @@ export default function Hero() {
         aria-hidden
       />
 
-      {/* 开场墨幕 */}
-      {!curtainGone && (
-        <div className="absolute inset-0 z-40 overflow-hidden" aria-hidden>
-          <div
-            className={`absolute inset-x-0 top-0 h-1/2 bg-night transition-transform duration-[900ms] ease-[cubic-bezier(0.72,0,0.2,1)] ${
-              introDone ? "-translate-y-full" : "translate-y-0"
-            }`}
-          >
-            <div className="paper-grain absolute inset-0 opacity-[0.08]" />
-          </div>
-          <div
-            className={`absolute inset-x-0 bottom-0 h-1/2 bg-night transition-transform duration-[900ms] ease-[cubic-bezier(0.72,0,0.2,1)] ${
-              introDone ? "translate-y-full" : "translate-y-0"
-            }`}
-          >
-            <div className="paper-grain absolute inset-0 opacity-[0.08]" />
-          </div>
-
-          <div
-            className={`absolute left-1/2 top-1/2 flex -translate-x-1/2 -translate-y-1/2 flex-col items-center gap-5 transition-all duration-500 ${
-              introDone ? "scale-75 opacity-0" : "scale-100 opacity-100"
-            }`}
-          >
-            <span className="relative">
-              <BrandLogo size={84} />
-              <span className="absolute -inset-4 -z-10 animate-breathe rounded-full bg-cinnabar/20 blur-2xl" />
-            </span>
-            <span className="font-brush text-2xl tracking-[0.2em] text-paper-soft">
-              {copy.introTitle}
-            </span>
-            <span className="text-[9px] tracking-[0.42em] text-gold-soft">
-              NARRATIVEOS
-            </span>
-            <span className="h-px w-28 animate-breathe bg-gradient-to-r from-transparent via-cinnabar to-transparent" />
-          </div>
+      {/* CSS dismisses the curtain even when hydration fails or is delayed. */}
+      <div className="hero-intro-curtain pointer-events-none absolute inset-0 z-40 overflow-hidden" aria-hidden>
+        <div
+          className="hero-curtain-top absolute inset-x-0 top-0 h-1/2 bg-night"
+        >
+          <div className="paper-grain absolute inset-0 opacity-[0.08]" />
         </div>
-      )}
+        <div
+          className="hero-curtain-bottom absolute inset-x-0 bottom-0 h-1/2 bg-night"
+        >
+          <div className="paper-grain absolute inset-0 opacity-[0.08]" />
+        </div>
+
+        <div
+          className="hero-curtain-mark absolute left-1/2 top-1/2 flex -translate-x-1/2 -translate-y-1/2 flex-col items-center gap-5"
+        >
+          <span className="relative">
+            <BrandLogo size={84} />
+            <span className="absolute -inset-4 -z-10 animate-breathe rounded-full bg-cinnabar/20 blur-2xl" />
+          </span>
+          <span className="font-brush text-2xl tracking-[0.2em] text-paper-soft">
+            {copy.introTitle}
+          </span>
+          <span className="text-[9px] tracking-[0.42em] text-gold-soft">
+            NARRATIVEOS
+          </span>
+          <span className="h-px w-28 animate-breathe bg-gradient-to-r from-transparent via-cinnabar to-transparent" />
+        </div>
+      </div>
       </div>
     </section>
   );

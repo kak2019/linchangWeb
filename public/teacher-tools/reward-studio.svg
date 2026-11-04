@@ -1,0 +1,32 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 540">
+  <rect width="960" height="540" fill="#e9edde"/>
+  <path d="M0 440Q180 310 410 440T960 410V540H0Z" fill="#dce3ce"/>
+  <g transform="translate(130 62) rotate(-8 330 200)">
+    <rect x="12" y="15" width="660" height="410" rx="8" fill="#506346" opacity=".09"/>
+    <rect width="660" height="410" rx="5" fill="#fffef9"/>
+    <rect x="26" y="26" width="608" height="358" rx="2" fill="none" stroke="#b79c65" stroke-width="2"/>
+    <rect x="32" y="32" width="596" height="346" fill="none" stroke="#b79c65" stroke-width=".6"/>
+    <g text-anchor="middle" font-family="PingFang SC,Microsoft YaHei,sans-serif">
+      <text x="330" y="70" font-size="11" letter-spacing="3" fill="#a08a5b">A LITTLE MOMENT OF GROWTH</text>
+      <text x="330" y="144" font-size="60" fill="#a43e49" font-family="Songti SC,serif" letter-spacing="18">奖 状</text>
+      <text x="330" y="194" font-size="18" fill="#62624d">送给闪闪发光的你</text>
+      <path d="M210 211h240" stroke="#cbbd96"/>
+      <text x="330" y="251" font-size="26" fill="#a43e49">每一次努力，都值得被看见</text>
+      <text x="330" y="286" font-size="13" fill="#8d9279">跨学科 · A4 奖状 · 夸夸邮票 · 小红花</text>
+      <text x="330" y="357" font-size="10" letter-spacing="2" fill="#a08a5b">NARRATIVEOS · 作者 Flynt</text>
+    </g>
+  </g>
+  <g transform="translate(705 286) rotate(9 80 100)">
+    <rect x="8" y="9" width="160" height="202" rx="4" fill="#506346" opacity=".08"/>
+    <rect width="160" height="202" rx="2" fill="#fffef9" stroke="#b79c65" stroke-width="5" stroke-dasharray="1 11" stroke-linecap="round"/>
+    <rect x="10" y="10" width="140" height="182" fill="none" stroke="#b79c65" stroke-width=".6"/>
+    <g fill="#edc6c1" stroke="#a43e49" stroke-width="1.5">
+      <circle cx="80" cy="48" r="16"/><circle cx="102" cy="62" r="16"/><circle cx="102" cy="87" r="16"/><circle cx="80" cy="101" r="16"/><circle cx="58" cy="87" r="16"/><circle cx="58" cy="62" r="16"/>
+      <circle cx="80" cy="75" r="18" fill="#fffef9"/>
+    </g>
+    <path d="m71 75 6 6 13-13" fill="none" stroke="#a43e49" stroke-width="2"/>
+    <text x="80" y="145" text-anchor="middle" font-family="PingFang SC,Microsoft YaHei,sans-serif" font-size="17" fill="#a43e49">你真棒！</text>
+    <text x="80" y="171" text-anchor="middle" font-family="sans-serif" font-size="10" letter-spacing="2" fill="#9a916e">BY FLYNT</text>
+  </g>
+  <g fill="none" stroke="#9caa87" stroke-width="2"><path d="M71 142v32m-16-16h32M852 105v24m-12-12h24"/><circle cx="80" cy="390" r="5"/><circle cx="874" cy="235" r="6"/></g>
+</svg>

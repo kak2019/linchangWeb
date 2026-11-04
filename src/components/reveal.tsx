@@ -24,12 +24,13 @@ export default function Reveal({
   useEffect(() => {
     const node = ref.current;
     if (!node) return;
-    if (reducedMotion) return;
+    if (reducedMotion || !("IntersectionObserver" in window)) return;
 
     const observer = new IntersectionObserver(
       (entries) => {
         entries.forEach((entry) => {
           if (entry.isIntersecting) {
+            node.classList.remove("is-pending");
             setVisible(true);
             observer.disconnect();
           }
@@ -38,8 +39,13 @@ export default function Reveal({
       { threshold, rootMargin: "0px 0px -8% 0px" },
     );
 
+    // Server-rendered content stays visible until observation is available.
+    node.classList.add("is-pending");
     observer.observe(node);
-    return () => observer.disconnect();
+    return () => {
+      node.classList.remove("is-pending");
+      observer.disconnect();
+    };
   }, [threshold, reducedMotion]);
 
   return (

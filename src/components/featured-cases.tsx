@@ -171,7 +171,7 @@ export default function FeaturedCases() {
                     </div>
 
                     <div className="animate-flip-in-right relative min-h-[280px] overflow-hidden bg-night md:min-h-[220px]">
-                      {item.video ? (
+                      {item.video && isActive ? (
                         <video
                           src={item.video}
                           poster={item.image}
@@ -179,7 +179,7 @@ export default function FeaturedCases() {
                           muted
                           loop
                           playsInline
-                          preload="auto"
+                          preload="none"
                           disablePictureInPicture
                           className="h-full w-full object-cover"
                         />

@@ -2,6 +2,8 @@ import { teacherWorkWhere, type TeacherWorkFilters } from "./teacher-plaza-filte
 export type { TeacherWorkFilters } from "./teacher-plaza-filters";
 import { timingSafeEqual } from "node:crypto";
 import { getPrisma } from "@/lib/db";
+import type { Prisma } from "@prisma/client";
+import { builtinTeacherWorks, matchingBuiltinTeacherWorks } from "./builtin-teacher-works";
 
 export const TEACHER_WORK_PAGE_SIZE = 12;
 
@@ -80,66 +82,85 @@ export function serializeTeacherWork(work: {
   };
 }
 
-export async function listPublishedTeacherWorks(query: string, page: number, pageSize = TEACHER_WORK_PAGE_SIZE, offset?: number) {
+function workOrder(sort: TeacherWorkFilters["sort"]): Prisma.TeacherWorkOrderByWithRelationInput[] {
+  if (sort === "oldest") return [{ publishedAt: "asc" }, { id: "asc" }];
+  if (sort === "title") return [{ title: "asc" }, { id: "asc" }];
+  if (sort === "latest") return [{ publishedAt: "desc" }, { id: "desc" }];
+  return [{ featured: "desc" }, { publishedAt: "desc" }, { id: "desc" }];
+}
+
+function worksBefore(work: PublicTeacherWork, sort: TeacherWorkFilters["sort"]): Prisma.TeacherWorkWhereInput {
+  if (sort === "title") return { OR: [{ title: { lt: work.title } }, { title: work.title, id: { lt: work.id } }] };
+  const date = new Date(work.publishedAt);
+  const chronological: Prisma.TeacherWorkWhereInput = sort === "oldest"
+    ? { OR: [{ publishedAt: { lt: date } }, { publishedAt: date, id: { lt: work.id } }] }
+    : { OR: [{ publishedAt: { gt: date } }, { publishedAt: date, id: { gt: work.id } }] };
+  if (sort === "latest" || sort === "oldest") return chronological;
+  return work.featured
+    ? { featured: true, ...chronological }
+    : { OR: [{ featured: true }, { featured: false, ...chronological }] };
+}
+
+function compareBuiltinWorks(a: PublicTeacherWork, b: PublicTeacherWork, sort: TeacherWorkFilters["sort"]) {
+  if (sort === "title") return a.title.localeCompare(b.title) || a.id.localeCompare(b.id);
+  if (sort === "oldest") return Date.parse(a.publishedAt) - Date.parse(b.publishedAt) || a.id.localeCompare(b.id);
+  return (sort === "latest" ? 0 : Number(b.featured) - Number(a.featured)) ||
+    Date.parse(b.publishedAt) - Date.parse(a.publishedAt) || b.id.localeCompare(a.id);
+}
+
+async function teacherWorkPage(query: string, page: number, pageSize: number, filters: TeacherWorkFilters, offset?: number) {
   const prisma = getPrisma();
   const normalizedQuery = query.trim().slice(0, 80);
-  const safePage = Number.isFinite(page) ? Math.max(1, Math.floor(page)) : 1;
   pageSize = Number.isFinite(pageSize) ? Math.min(30, Math.max(1, Math.floor(pageSize))) : TEACHER_WORK_PAGE_SIZE;
+  const where = teacherWorkWhere(normalizedQuery, filters);
+  const builtins = matchingBuiltinTeacherWorks(normalizedQuery, filters).sort((a, b) => compareBuiltinWorks(a, b, filters.sort));
+  const databaseTotal = await prisma.teacherWork.count({ where });
+  const total = databaseTotal + builtins.length;
+  const totalPages = Math.max(1, Math.ceil(total / pageSize));
+  const safePage = Math.min(totalPages, Math.max(1, Number.isFinite(page) ? Math.floor(page) : 1));
   const skip = offset === undefined ? (safePage - 1) * pageSize : Math.max(0, Math.floor(offset));
-  const where = {
-    status: "PUBLISHED" as const,
-    ...(normalizedQuery
-      ? {
-          title: {
-            contains: normalizedQuery,
-          },
-        }
-      : {}),
-  };
-
-  const [total, works] = await prisma.$transaction([
-    prisma.teacherWork.count({ where }),
-    prisma.teacherWork.findMany({
-      where,
-      include: {
-        author: {
-          select: { nickname: true, email: true, avatarUrl: true },
-        },
-      },
-      orderBy: [{ featured: "desc" }, { publishedAt: "desc" }, { id: "desc" }],
-      skip,
-      take: pageSize,
-    }),
-  ]);
+  // Count the preceding database rows, then fetch only this page. Built-in
+  // resources therefore participate in sorting and pagination without a DB seed.
+  const positioned = await Promise.all(builtins.map(async (work, index) => ({
+    work,
+    position: index + await prisma.teacherWork.count({ where: { AND: [where, worksBefore(work, filters.sort)] } }),
+  })));
+  const visible = new Map(positioned.filter(item => item.position >= skip && item.position < skip + pageSize)
+    .map(item => [item.position, item.work]));
+  const preceding = positioned.filter(item => item.position < skip).length;
+  const databaseWorks = await prisma.teacherWork.findMany({
+    where,
+    include: { author: { select: { nickname: true, email: true, avatarUrl: true } } },
+    orderBy: workOrder(filters.sort),
+    skip: Math.max(0, skip - preceding),
+    take: pageSize - visible.size,
+  });
+  let databaseIndex = 0;
+  const works: PublicTeacherWork[] = [];
+  for (let position = skip; position < Math.min(total, skip + pageSize); position++) {
+    const builtin = visible.get(position);
+    if (builtin) works.push(builtin);
+    else if (databaseWorks[databaseIndex]) works.push(serializeTeacherWork(databaseWorks[databaseIndex++]));
+  }
 
   return {
     query: normalizedQuery,
     page: safePage,
     pageSize,
     total,
-    totalPages: Math.max(1, Math.ceil(total / pageSize)),
-    works: works.map(serializeTeacherWork),
+    totalPages,
+    works,
     nextOffset: skip + works.length,
     hasMore: skip + works.length < total,
   };
 }
 
+export async function listPublishedTeacherWorks(query: string, page: number, pageSize = TEACHER_WORK_PAGE_SIZE, offset?: number) {
+  return teacherWorkPage(query, page, pageSize, {}, offset);
+}
+
 export async function listFilteredTeacherWorks(query: string, page: number, pageSize = TEACHER_WORK_PAGE_SIZE, filters: TeacherWorkFilters = {}) {
-  const prisma = getPrisma();
-  const normalizedQuery = query.trim().slice(0, 80);
-  const where = teacherWorkWhere(normalizedQuery, filters);
-  pageSize = Math.max(1, Math.min(30, Math.floor(pageSize) || 12));
-  const total = await prisma.teacherWork.count({ where });
-  const totalPages = Math.max(1, Math.ceil(total / pageSize));
-  const safePage = Math.min(totalPages, Math.max(1, Number.isFinite(page) ? Math.floor(page) : 1));
-  const works = await prisma.teacherWork.findMany({
-    where,
-    include: { author: { select: { nickname: true, email: true, avatarUrl: true } } },
-    orderBy: filters.sort === "oldest" ? [{ publishedAt: "asc" }, { id: "asc" }] : filters.sort === "title" ? [{ title: "asc" }, { id: "asc" }] : filters.sort === "latest" ? [{ publishedAt: "desc" }, { id: "desc" }] : [{ featured: "desc" }, { publishedAt: "desc" }, { id: "desc" }],
-    skip: (safePage - 1) * pageSize,
-    take: pageSize,
-  });
-  return { query: normalizedQuery, page: safePage, pageSize, total, totalPages, works: works.map(serializeTeacherWork) };
+  return teacherWorkPage(query, page, pageSize, filters);
 }
 
 export async function teacherWorkFacets() {
@@ -149,5 +170,9 @@ export async function teacherWorkFacets() {
     prisma.teacherWork.findMany({ where: { status: "PUBLISHED", grade: { not: null } }, distinct: ["grade"], select: { grade: true }, orderBy: { grade: "asc" } }),
     prisma.teacherWork.findMany({ where: { status: "PUBLISHED" }, select: { tags: true } }),
   ]);
-  return { tags: [...new Set(metadata.flatMap(w => Array.isArray(w.tags) ? w.tags.filter((t): t is string => typeof t === "string") : []))].sort(), subjects: subjects.flatMap(w => w.subject?.trim() ? [w.subject] : []), grades: grades.flatMap(w => w.grade?.trim() ? [w.grade] : []) };
+  return {
+    tags: [...new Set([...metadata.flatMap(w => Array.isArray(w.tags) ? w.tags.filter((t): t is string => typeof t === "string") : []), ...builtinTeacherWorks.flatMap(work => work.tags)])].sort(),
+    subjects: [...new Set([...subjects.flatMap(w => w.subject?.trim() ? [w.subject] : []), ...builtinTeacherWorks.flatMap(work => work.subject ? [work.subject] : [])])],
+    grades: [...new Set([...grades.flatMap(w => w.grade?.trim() ? [w.grade] : []), ...builtinTeacherWorks.flatMap(work => work.grade ? [work.grade] : [])])],
+  };
 }

@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1000" height="660" viewBox="0 0 1000 660">
+  <rect width="1000" height="660" fill="#e9eddf"/>
+  <circle cx="100" cy="600" r="210" fill="#dfe7d1"/>
+  <circle cx="967" cy="44" r="157" fill="#f2f2e6"/>
+  <rect x="116" y="56" width="770" height="550" rx="18" fill="#526943" opacity=".07"/>
+  <rect x="108" y="48" width="770" height="550" rx="18" fill="#fcfcf2"/>
+  <circle cx="150" cy="86" r="5" fill="#8caa72"/>
+  <text x="169" y="91" font-size="13" fill="#8c9f76" font-family="sans-serif">自习时间 · 给专注留一点空间</text>
+  <text x="490" y="161" text-anchor="middle" font-size="39" fill="#52674a" font-family="serif">静一静 · 自习音量灯</text>
+  <path d="M311 371a180 180 0 0 1 360 0" fill="none" stroke="#e0e8d3" stroke-width="15" stroke-linecap="round"/>
+  <path d="M311 371a180 180 0 0 1 137-175" fill="none" stroke="#92aa78" stroke-width="15" stroke-linecap="round"/>
+  <circle cx="624" cy="251" r="8" fill="#fcfcf2" stroke="#baa86b" stroke-width="4"/>
+  <text x="490" y="315" text-anchor="middle" font-family="serif" font-size="66" fill="#748b5e">−52.0</text>
+  <text x="490" y="348" text-anchor="middle" font-family="sans-serif" font-size="12" fill="#a1af8d">dBFS · 相对麦克风电平</text>
+  <text x="490" y="415" text-anchor="middle" font-family="serif" font-size="28" fill="#82996d">安静，保持就好。</text>
+  <path d="M218 465h546" stroke="#e1e8d5"/>
+  <text x="490" y="501" text-anchor="middle" font-family="sans-serif" font-size="15" fill="#95a782">连续超标才提醒 / 阈值可调 / 安静自动恢复</text>
+  <text x="490" y="541" text-anchor="middle" font-family="sans-serif" font-size="12" fill="#a8b599">本机分析音量 · 不录音 · 不上传</text>
+  <g transform="translate(794 495) rotate(8)"><rect width="63" height="63" rx="4" fill="#a76c58"/><text x="31" y="40" text-anchor="middle" fill="#fff9ed" font-family="serif" font-size="21">静</text></g>
+</svg>

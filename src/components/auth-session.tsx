@@ -9,7 +9,7 @@ type AuthSessionValue = {
   user: AuthUser | null; loading: boolean; refresh: () => Promise<void>; logout: () => Promise<void>;
 };
 const AuthSessionContext = createContext<AuthSessionValue | null>(null);
-const loadSession = () => getPortalSession<AuthUser>();
+const loadSession = () => getPortalSession<AuthUser>("/api/auth/me?optional=1");
 
 export function AuthSessionProvider({ children }: { children: ReactNode }) {
   const { user, loading, refresh, clear } = useSession(loadSession);
